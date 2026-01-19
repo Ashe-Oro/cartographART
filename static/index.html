@@ -3,86 +3,228 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>City Map Posters</title>
+    <title>Cartograph — City Map Posters</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
-    <header>
-        <h1>City Map Poster Generator</h1>
-        <p>Beautiful minimalist map posters for any city in the world</p>
-    </header>
+    <!-- Grain overlay -->
+    <div class="grain"></div>
 
-    <main>
-        <!-- Order Form -->
-        <section id="order-form">
-            <h2>Create Your Poster</h2>
-            <form id="poster-form">
-                <div class="form-group">
-                    <label for="location-search">Location</label>
-                    <div class="autocomplete-wrapper">
-                        <input type="text" id="location-search" autocomplete="off" required placeholder="Start typing a city name...">
-                        <div id="autocomplete-results" class="autocomplete-results hidden"></div>
+    <!-- Floating nav -->
+    <nav class="floating-nav">
+        <div class="nav-logo">CARTOGRAPH</div>
+        <div class="nav-tagline">Bespoke City Prints</div>
+    </nav>
+
+    <main class="app-container">
+        <!-- Left Panel - Form -->
+        <section class="panel panel-form" id="order-form">
+            <div class="panel-content">
+                <header class="form-header">
+                    <span class="overline">Commission Your</span>
+                    <h1>City<br>Portrait</h1>
+                    <p class="subtitle">Transform any location into museum-quality cartographic art</p>
+                </header>
+
+                <form id="poster-form" class="poster-form">
+                    <div class="form-section">
+                        <div class="section-label">
+                            <span class="label-number">01</span>
+                            <span class="label-text">Location</span>
+                        </div>
+
+                        <div class="input-group">
+                            <div class="input-wrapper autocomplete-wrapper">
+                                <input type="text" id="location-search" autocomplete="off" required placeholder=" ">
+                                <label for="location-search">Search for a city...</label>
+                                <div class="input-line"></div>
+                                <div id="autocomplete-results" class="autocomplete-results hidden"></div>
+                            </div>
+                            <input type="hidden" id="city" name="city">
+                            <input type="hidden" id="state" name="state">
+                            <input type="hidden" id="country" name="country">
+                        </div>
                     </div>
-                    <input type="hidden" id="city" name="city">
-                    <input type="hidden" id="state" name="state">
-                    <input type="hidden" id="country" name="country">
-                </div>
-                <div class="form-group">
-                    <label>Theme</label>
-                    <div id="theme-gallery"></div>
-                    <input type="hidden" id="theme" name="theme" value="feature_based">
-                </div>
-                <div class="form-group">
-                    <label for="size">Map Size</label>
-                    <select id="size" name="size">
-                        <option value="auto" selected>Auto-detect (recommended)</option>
-                        <option value="neighborhood">Neighborhood (2km)</option>
-                        <option value="small">Small (4km) - Villages</option>
-                        <option value="town">Town (6km)</option>
-                        <option value="city">City (12km)</option>
-                        <option value="metro">Metro (20km)</option>
-                        <option value="region">Region (35km)</option>
-                    </select>
-                </div>
-                <div class="price-info">
-                    <p>Price: <strong>$0.75 USDC</strong> (Base network)</p>
-                    <p class="note">Currently in demo mode - no payment required</p>
-                </div>
-                <button type="submit" id="submit-btn">Generate Poster</button>
-            </form>
+
+                    <div class="form-section">
+                        <div class="section-label">
+                            <span class="label-number">02</span>
+                            <span class="label-text">Aesthetic</span>
+                        </div>
+
+                        <div id="theme-gallery" class="theme-gallery"></div>
+                        <input type="hidden" id="theme" name="theme" value="feature_based">
+                    </div>
+
+                    <div class="form-section">
+                        <div class="section-label">
+                            <span class="label-number">03</span>
+                            <span class="label-text">Scale</span>
+                        </div>
+
+                        <div class="select-wrapper">
+                            <select id="size" name="size" class="size-select">
+                                <option value="auto" selected>Auto-detect (recommended)</option>
+                                <option value="neighborhood">Neighborhood (2km)</option>
+                                <option value="small">Small (4km) - Villages</option>
+                                <option value="town">Town (6km)</option>
+                                <option value="city">City (12km)</option>
+                                <option value="metro">Metro (20km)</option>
+                                <option value="region">Region (35km)</option>
+                            </select>
+                            <div class="select-arrow">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M6 9l6 6 6-6"/>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-footer">
+                        <div class="price-display">
+                            <span class="price-label">Investment</span>
+                            <span class="price-amount">$0.75 <span class="price-currency">USDC</span></span>
+                            <span class="price-note">Demo mode — complimentary</span>
+                        </div>
+                        <button type="submit" id="submit-btn" class="btn-generate">
+                            <span class="btn-text">Create Artwork</span>
+                            <span class="btn-icon">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                                </svg>
+                            </span>
+                        </button>
+                    </div>
+                </form>
+            </div>
         </section>
 
         <!-- Status Section -->
-        <section id="status" class="hidden">
-            <h2>Generation Status</h2>
-            <div id="status-content">
-                <div class="spinner"></div>
-                <p id="status-text">Initializing...</p>
-                <div class="progress-bar">
-                    <div id="progress"></div>
+        <section class="panel panel-form hidden" id="status">
+            <div class="panel-content status-content">
+                <div class="status-visual">
+                    <div class="status-rings">
+                        <div class="ring ring-1"></div>
+                        <div class="ring ring-2"></div>
+                        <div class="ring ring-3"></div>
+                    </div>
+                    <div class="status-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                        </svg>
+                    </div>
+                </div>
+                <h2 class="status-title">Crafting Your Map</h2>
+                <p id="status-text" class="status-message">Initializing cartographic engine...</p>
+                <div class="progress-container">
+                    <div class="progress-track">
+                        <div id="progress" class="progress-fill"></div>
+                    </div>
+                    <div class="progress-markers">
+                        <span>Geocoding</span>
+                        <span>Rendering</span>
+                        <span>Compositing</span>
+                    </div>
                 </div>
             </div>
         </section>
 
-        <!-- Result Section -->
-        <section id="result" class="hidden">
-            <h2>Your Poster</h2>
-            <img id="result-image" alt="Generated poster">
-            <div class="result-actions">
-                <a id="download-btn" class="button" download>Download PNG</a>
-                <button id="new-poster-btn" class="button secondary">Create Another</button>
+        <!-- Result Section (left panel controls) -->
+        <section class="panel panel-form hidden" id="result">
+            <div class="panel-content result-content">
+                <span class="overline">Your Artwork</span>
+                <h2 class="result-title">Complete</h2>
+                <div class="result-actions">
+                    <a id="download-btn" class="btn-download" download>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                        </svg>
+                        Download PNG
+                    </a>
+                    <button id="new-poster-btn" class="btn-new">
+                        Create Another
+                    </button>
+                </div>
+                <div class="retheme-section">
+                    <h3>Try a Different Theme</h3>
+                    <div id="retheme-gallery" class="theme-gallery retheme-gallery"></div>
+                    <button id="apply-theme-btn" class="btn-retheme">Apply Theme</button>
+                </div>
             </div>
-            <div class="retheme-section">
-                <h3>Try a Different Theme</h3>
-                <div id="retheme-gallery"></div>
-                <button id="apply-theme-btn" class="button">Apply Theme</button>
+        </section>
+
+        <!-- Right Panel - Preview / Result Display -->
+        <section class="panel panel-preview" id="preview-panel">
+            <!-- Preview (shown during form) -->
+            <div class="preview-content" id="preview-content">
+                <div class="preview-frame" id="preview-frame">
+                    <div class="preview-mat">
+                        <div class="preview-poster" id="preview-poster">
+                            <div class="preview-map">
+                                <svg class="map-lines" viewBox="0 0 200 300" preserveAspectRatio="xMidYMid slice">
+                                    <!-- Animated street grid -->
+                                    <g class="street-grid" stroke="currentColor" stroke-width="0.5" fill="none" opacity="0.6">
+                                        <path d="M20,0 L20,300" class="street s1"/>
+                                        <path d="M50,0 L50,300" class="street s2"/>
+                                        <path d="M80,0 L80,300" class="street s3"/>
+                                        <path d="M120,0 L120,300" class="street s4"/>
+                                        <path d="M150,0 L150,300" class="street s5"/>
+                                        <path d="M180,0 L180,300" class="street s6"/>
+                                        <path d="M0,40 L200,40" class="street s7"/>
+                                        <path d="M0,80 L200,80" class="street s8"/>
+                                        <path d="M0,120 L200,120" class="street s9"/>
+                                        <path d="M0,160 L200,160" class="street s10"/>
+                                        <path d="M0,200 L200,200" class="street s11"/>
+                                        <path d="M0,240 L200,240" class="street s12"/>
+                                    </g>
+                                    <!-- Diagonal accent roads -->
+                                    <g class="accent-roads" stroke="currentColor" stroke-width="1" fill="none" opacity="0.8">
+                                        <path d="M0,100 Q100,150 200,100" class="road r1"/>
+                                        <path d="M0,200 Q100,180 200,220" class="road r2"/>
+                                        <path d="M60,0 Q80,150 40,300" class="road r3"/>
+                                    </g>
+                                </svg>
+                            </div>
+                            <div class="preview-text">
+                                <div class="preview-city" id="preview-city">YOUR CITY</div>
+                                <div class="preview-divider"></div>
+                                <div class="preview-country" id="preview-country">AWAITS</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="preview-caption">
+                    <span class="caption-label">Live Preview</span>
+                    <span class="caption-note">Final artwork rendered at 300 DPI</span>
+                </div>
             </div>
+
+            <!-- Result Image (shown after generation) -->
+            <div class="result-display hidden" id="result-display">
+                <div class="result-frame-large">
+                    <img id="result-image" alt="Generated poster">
+                </div>
+                <div class="result-caption">
+                    <span class="caption-label">Your Artwork</span>
+                    <span class="caption-note">Click to download full resolution</span>
+                </div>
+            </div>
+
+            <!-- Decorative elements -->
+            <div class="deco-corner deco-tl"></div>
+            <div class="deco-corner deco-br"></div>
         </section>
     </main>
 
-    <footer>
-        <p>Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors</p>
-        <p>Built with x402 payments on Base</p>
+    <footer class="site-footer">
+        <div class="footer-content">
+            <p>Cartographic data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a></p>
+            <p class="footer-divider">•</p>
+            <p>Powered by x402 on Base</p>
+        </div>
     </footer>
 
     <script src="/static/js/app.js"></script>

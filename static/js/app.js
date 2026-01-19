@@ -7,6 +7,25 @@ let searchTimeout = null;
 let selectedLocation = null;
 let lastRequest = null;  // Store last request for re-theming
 let selectedRetheme = null;  // Selected theme in result view
+let currentTheme = null;
+let titleRotationInterval = null;
+let currentTitleIndex = 0;
+
+// Witty status titles to rotate through while generating
+const statusTitles = [
+    "Crafting Your Map",
+    "Cartography in Progress",
+    "Mapping the Streets",
+    "Drawing Every Alley",
+    "Tracing Urban Arteries",
+    "Plotting Your City",
+    "Rendering the Grid",
+    "Weaving Street Patterns",
+    "Capturing the Layout",
+    "Charting Territory",
+    "Sketching the Cityscape",
+    "Inking the Roads"
+];
 
 // Load themes on page load
 async function loadThemes() {
@@ -17,18 +36,44 @@ async function loadThemes() {
         const gallery = document.getElementById('theme-gallery');
         const rethemeGallery = document.getElementById('retheme-gallery');
 
-        data.themes.forEach((theme) => {
+        // Mini map SVG for theme previews
+        const miniMapSvg = `
+            <svg class="theme-mini-map" viewBox="0 0 60 80" preserveAspectRatio="xMidYMid slice">
+                <g stroke="currentColor" fill="none" opacity="0.5">
+                    <path d="M10,0 L10,80" stroke-width="0.8"/>
+                    <path d="M25,0 L25,80" stroke-width="0.5"/>
+                    <path d="M40,0 L40,80" stroke-width="0.8"/>
+                    <path d="M55,0 L55,80" stroke-width="0.5"/>
+                    <path d="M0,15 L60,15" stroke-width="0.5"/>
+                    <path d="M0,35 L60,35" stroke-width="0.8"/>
+                    <path d="M0,55 L60,55" stroke-width="0.5"/>
+                </g>
+                <g stroke="currentColor" fill="none" opacity="0.7">
+                    <path d="M0,25 Q30,35 60,20" stroke-width="1.2"/>
+                    <path d="M15,0 Q20,40 10,80" stroke-width="1"/>
+                </g>
+            </svg>
+        `;
+
+        data.themes.forEach((theme, index) => {
             // Main form gallery
             const card = document.createElement('div');
             card.className = 'theme-card' + (theme.id === 'feature_based' ? ' selected' : '');
             card.dataset.themeId = theme.id;
+            card.dataset.bg = theme.bg;
+            card.dataset.text = theme.text;
             card.innerHTML = `
                 <div class="theme-preview" style="background: ${theme.bg}; color: ${theme.text}">
-                    ${theme.name}
+                    ${miniMapSvg}
+                    <span class="theme-name">${theme.name}</span>
                 </div>
             `;
-            card.onclick = () => selectTheme(theme.id, card);
+            card.onclick = () => selectTheme(theme.id, card, theme);
             card.title = theme.description || theme.name;
+
+            // Stagger animation
+            card.style.animation = `fadeInUp 0.5s var(--ease-out) ${0.3 + index * 0.05}s both`;
+
             gallery.appendChild(card);
 
             // Retheme gallery (on result page)
@@ -37,12 +82,19 @@ async function loadThemes() {
             rethemeCard.dataset.themeId = theme.id;
             rethemeCard.innerHTML = `
                 <div class="theme-preview" style="background: ${theme.bg}; color: ${theme.text}">
-                    ${theme.name}
+                    ${miniMapSvg}
+                    <span class="theme-name">${theme.name}</span>
                 </div>
             `;
             rethemeCard.onclick = () => selectRetheme(theme.id, rethemeCard);
             rethemeCard.title = theme.description || theme.name;
             rethemeGallery.appendChild(rethemeCard);
+
+            // Set initial theme
+            if (theme.id === 'feature_based') {
+                currentTheme = theme;
+                updatePreview(theme);
+            }
         });
     } catch (error) {
         console.error('Failed to load themes:', error);
@@ -57,13 +109,48 @@ function selectRetheme(themeId, card) {
 }
 
 // Select theme from gallery
-function selectTheme(themeId, card) {
+function selectTheme(themeId, card, theme) {
     // Update hidden input
     document.getElementById('theme').value = themeId;
+    currentTheme = theme;
 
     // Update gallery selection
-    document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('selected'));
+    document.querySelectorAll('#theme-gallery .theme-card').forEach(c => c.classList.remove('selected'));
     card.classList.add('selected');
+
+    // Update live preview
+    updatePreview(theme);
+}
+
+// Update the live preview poster
+function updatePreview(theme) {
+    const poster = document.getElementById('preview-poster');
+    const mapLines = document.querySelector('.map-lines');
+
+    if (poster && theme) {
+        poster.style.backgroundColor = theme.bg;
+        poster.style.color = theme.text;
+
+        // Update SVG stroke colors
+        if (mapLines) {
+            mapLines.style.color = theme.text;
+        }
+    }
+}
+
+// Update preview text when location is selected
+function updatePreviewText() {
+    const cityInput = document.getElementById('city');
+    const countryInput = document.getElementById('country');
+    const previewCity = document.getElementById('preview-city');
+    const previewCountry = document.getElementById('preview-country');
+
+    if (previewCity && cityInput) {
+        previewCity.textContent = cityInput.value.toUpperCase() || 'YOUR CITY';
+    }
+    if (previewCountry && countryInput) {
+        previewCountry.textContent = countryInput.value.toUpperCase() || 'AWAITS';
+    }
 }
 
 // Location autocomplete
@@ -141,6 +228,9 @@ function selectLocation(index) {
 
     // Store selected location
     selectedLocation = { city, state, country };
+
+    // Update live preview
+    updatePreviewText();
 
     hideAutocomplete();
 }
@@ -229,14 +319,46 @@ async function handleSubmit(event) {
     submitPosterRequest(request, 'order-form');
 }
 
+// Start rotating status titles
+function startTitleRotation() {
+    currentTitleIndex = 0;
+    const titleElement = document.querySelector('.status-title');
+    if (titleElement) {
+        titleElement.textContent = statusTitles[0];
+    }
+
+    // Rotate every 4 seconds
+    titleRotationInterval = setInterval(() => {
+        currentTitleIndex = (currentTitleIndex + 1) % statusTitles.length;
+        if (titleElement) {
+            titleElement.style.opacity = '0';
+            setTimeout(() => {
+                titleElement.textContent = statusTitles[currentTitleIndex];
+                titleElement.style.opacity = '1';
+            }, 300);
+        }
+    }, 4000);
+}
+
+// Stop rotating status titles
+function stopTitleRotation() {
+    if (titleRotationInterval) {
+        clearInterval(titleRotationInterval);
+        titleRotationInterval = null;
+    }
+}
+
 // Submit poster request (used by both form and retheme)
 async function submitPosterRequest(request, hideSection) {
     try {
         // Show status section
         document.getElementById(hideSection).classList.add('hidden');
         document.getElementById('status').classList.remove('hidden');
-        document.getElementById('status-text').textContent = 'Starting generation...';
+        document.getElementById('status-text').textContent = 'Initializing cartographic engine...';
         document.getElementById('progress').style.width = '0%';
+
+        // Start rotating titles
+        startTitleRotation();
 
         // Submit request
         const response = await fetch(`${API_BASE}/api/posters`, {
@@ -253,7 +375,7 @@ async function submitPosterRequest(request, hideSection) {
         const result = await response.json();
         currentJobId = result.job_id;
 
-        document.getElementById('status-text').textContent = 'Generating poster...';
+        document.getElementById('status-text').textContent = 'Fetching cartographic data...';
         startTime = Date.now();
 
         // Start polling for status
@@ -303,28 +425,38 @@ async function pollJobStatus() {
 
         switch (job.status) {
             case 'pending':
-                document.getElementById('status-text').textContent = 'Waiting in queue...';
+                document.getElementById('status-text').textContent = 'Queued for processing...';
                 pollInterval = setTimeout(pollJobStatus, 2000);
                 break;
 
             case 'processing':
                 const elapsed = Math.floor((Date.now() - startTime) / 1000);
-                const minutes = Math.floor(elapsed / 60);
-                const seconds = elapsed % 60;
-                const timeStr = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+                const messages = [
+                    'Downloading street network...',
+                    'Mapping water features...',
+                    'Rendering road hierarchy...',
+                    'Applying theme aesthetics...',
+                    'Compositing final artwork...'
+                ];
+                const msgIndex = Math.min(Math.floor(job.progress / 25), messages.length - 1);
+                const timeStr = elapsed > 60
+                    ? `${Math.floor(elapsed / 60)}m ${elapsed % 60}s`
+                    : `${elapsed}s`;
                 document.getElementById('status-text').textContent =
-                    `Generating poster... (${timeStr} elapsed, typically takes 1-3 minutes)`;
+                    `${messages[msgIndex]} (${timeStr})`;
                 pollInterval = setTimeout(pollJobStatus, 3000);
                 break;
 
             case 'completed':
+                stopTitleRotation();
                 showResult(job);
                 break;
 
             case 'failed':
+                stopTitleRotation();
                 document.getElementById('status-text').textContent =
                     `Generation failed: ${job.error}`;
-                document.querySelector('.spinner').style.display = 'none';
+                document.querySelector('.status-rings').style.display = 'none';
                 break;
         }
     } catch (error) {
@@ -338,15 +470,24 @@ function showResult(job) {
     document.getElementById('status').classList.add('hidden');
     document.getElementById('result').classList.remove('hidden');
 
+    // Switch right panel from preview to result display
+    document.getElementById('preview-content').classList.add('hidden');
+    document.getElementById('result-display').classList.remove('hidden');
+
     const imageUrl = `${API_BASE}/api/posters/${job.job_id}`;
     document.getElementById('result-image').src = imageUrl;
     document.getElementById('download-btn').href = imageUrl;
 
+    // Make the result image clickable to download
+    document.getElementById('result-image').onclick = () => {
+        window.open(imageUrl, '_blank');
+    };
+
     // Highlight current theme in retheme gallery
-    const currentTheme = lastRequest?.theme || 'feature_based';
+    const currentThemeId = lastRequest?.theme || 'feature_based';
     selectedRetheme = null;
     document.querySelectorAll('#retheme-gallery .theme-card').forEach(card => {
-        card.classList.toggle('selected', card.dataset.themeId === currentTheme);
+        card.classList.toggle('selected', card.dataset.themeId === currentThemeId);
     });
 }
 
@@ -360,7 +501,14 @@ function resetForm() {
     document.getElementById('result').classList.add('hidden');
     document.getElementById('order-form').classList.remove('hidden');
     document.getElementById('poster-form').reset();
-    document.querySelector('.spinner').style.display = 'block';
+
+    // Switch right panel back to preview
+    document.getElementById('result-display').classList.add('hidden');
+    document.getElementById('preview-content').classList.remove('hidden');
+
+    // Reset status visual
+    const statusRings = document.querySelector('.status-rings');
+    if (statusRings) statusRings.style.display = 'block';
 
     // Clear location fields
     document.getElementById('location-search').value = '';
@@ -370,16 +518,41 @@ function resetForm() {
 
     // Reset theme selection to feature_based
     document.getElementById('theme').value = 'feature_based';
-    document.querySelectorAll('.theme-card').forEach((card) => {
-        card.classList.toggle('selected', card.dataset.themeId === 'feature_based');
+    document.querySelectorAll('#theme-gallery .theme-card').forEach((card) => {
+        const isDefault = card.dataset.themeId === 'feature_based';
+        card.classList.toggle('selected', isDefault);
+        if (isDefault && card.dataset.bg) {
+            updatePreview({
+                bg: card.dataset.bg,
+                text: card.dataset.text
+            });
+        }
     });
+
+    // Reset preview text
+    const previewCity = document.getElementById('preview-city');
+    const previewCountry = document.getElementById('preview-country');
+    if (previewCity) previewCity.textContent = 'YOUR CITY';
+    if (previewCountry) previewCountry.textContent = 'AWAITS';
 }
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     loadThemes();
     setupAutocomplete();
-    document.getElementById('poster-form').addEventListener('submit', handleSubmit);
-    document.getElementById('new-poster-btn').addEventListener('click', resetForm);
-    document.getElementById('apply-theme-btn').addEventListener('click', applyNewTheme);
+
+    const form = document.getElementById('poster-form');
+    if (form) {
+        form.addEventListener('submit', handleSubmit);
+    }
+
+    const newBtn = document.getElementById('new-poster-btn');
+    if (newBtn) {
+        newBtn.addEventListener('click', resetForm);
+    }
+
+    const applyBtn = document.getElementById('apply-theme-btn');
+    if (applyBtn) {
+        applyBtn.addEventListener('click', applyNewTheme);
+    }
 });
