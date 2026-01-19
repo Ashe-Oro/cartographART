@@ -225,6 +225,98 @@ button, .button {
     text-align: center;
 }
 
+.result-actions {
+    margin-bottom: 1.5rem;
+}
+
+.retheme-section {
+    border-top: 1px solid #eee;
+    padding-top: 1.5rem;
+    margin-top: 1rem;
+}
+
+.retheme-section h3 {
+    font-size: 1rem;
+    color: #666;
+    margin-bottom: 0.75rem;
+}
+
+#retheme-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+    gap: 0.4rem;
+    margin-bottom: 1rem;
+}
+
+#retheme-gallery .theme-card {
+    border-width: 2px;
+}
+
+#retheme-gallery .theme-preview {
+    height: 40px;
+    font-size: 0.55rem;
+}
+
+#apply-theme-btn {
+    background: #6c5ce7;
+}
+
+#apply-theme-btn:hover {
+    background: #5b4cdb;
+}
+
+/* Autocomplete */
+.autocomplete-wrapper {
+    position: relative;
+}
+
+.autocomplete-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 100;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.autocomplete-item {
+    padding: 0.75rem;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+}
+
+.autocomplete-item:last-child {
+    border-bottom: none;
+}
+
+.autocomplete-item:hover,
+.autocomplete-item.active {
+    background: #f0f7ff;
+}
+
+.autocomplete-item .place-name {
+    font-weight: 500;
+    color: #333;
+}
+
+.autocomplete-item .place-details {
+    font-size: 0.85rem;
+    color: #666;
+    margin-top: 0.25rem;
+}
+
+.autocomplete-loading {
+    padding: 0.75rem;
+    text-align: center;
+    color: #666;
+}
+
 /* Utility */
 .hidden {
     display: none !important;

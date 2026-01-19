@@ -18,16 +18,14 @@
             <h2>Create Your Poster</h2>
             <form id="poster-form">
                 <div class="form-group">
-                    <label for="city">City</label>
-                    <input type="text" id="city" name="city" required placeholder="e.g., Tokyo">
-                </div>
-                <div class="form-group">
-                    <label for="state">State / Region <span class="optional">(optional)</span></label>
-                    <input type="text" id="state" name="state" placeholder="e.g., Virginia, Ontario, Bavaria">
-                </div>
-                <div class="form-group">
-                    <label for="country">Country</label>
-                    <input type="text" id="country" name="country" required placeholder="e.g., Japan">
+                    <label for="location-search">Location</label>
+                    <div class="autocomplete-wrapper">
+                        <input type="text" id="location-search" autocomplete="off" required placeholder="Start typing a city name...">
+                        <div id="autocomplete-results" class="autocomplete-results hidden"></div>
+                    </div>
+                    <input type="hidden" id="city" name="city">
+                    <input type="hidden" id="state" name="state">
+                    <input type="hidden" id="country" name="country">
                 </div>
                 <div class="form-group">
                     <label>Theme</label>
@@ -35,13 +33,15 @@
                     <input type="hidden" id="theme" name="theme" value="feature_based">
                 </div>
                 <div class="form-group">
-                    <label for="distance">Map Radius</label>
-                    <select id="distance" name="distance">
-                        <option value="5000">Small (5km) - Dense areas</option>
-                        <option value="8000">Medium-Small (8km)</option>
-                        <option value="10000" selected>Medium (10km) - Downtown</option>
-                        <option value="15000">Large (15km) - Full city</option>
-                        <option value="20000">Extra Large (20km) - Metro area</option>
+                    <label for="size">Map Size</label>
+                    <select id="size" name="size">
+                        <option value="auto" selected>Auto-detect (recommended)</option>
+                        <option value="neighborhood">Neighborhood (2km)</option>
+                        <option value="small">Small (4km) - Villages</option>
+                        <option value="town">Town (6km)</option>
+                        <option value="city">City (12km)</option>
+                        <option value="metro">Metro (20km)</option>
+                        <option value="region">Region (35km)</option>
                     </select>
                 </div>
                 <div class="price-info">
@@ -68,8 +68,15 @@
         <section id="result" class="hidden">
             <h2>Your Poster</h2>
             <img id="result-image" alt="Generated poster">
-            <a id="download-btn" class="button" download>Download PNG</a>
-            <button id="new-poster-btn" class="button secondary">Create Another</button>
+            <div class="result-actions">
+                <a id="download-btn" class="button" download>Download PNG</a>
+                <button id="new-poster-btn" class="button secondary">Create Another</button>
+            </div>
+            <div class="retheme-section">
+                <h3>Try a Different Theme</h3>
+                <div id="retheme-gallery"></div>
+                <button id="apply-theme-btn" class="button">Apply Theme</button>
+            </div>
         </section>
     </main>
 

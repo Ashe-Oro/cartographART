@@ -34,9 +34,17 @@ def generate_poster_task(job_id: str, request):
             request.country,
             "--theme",
             request.theme,
-            "--distance",
-            str(request.distance),
+            "--preview",  # Use low-res (72 DPI) until stable build
         ]
+
+        # Add size/distance options
+        if request.distance:
+            # Manual distance override
+            cmd.extend(["--distance", str(request.distance)])
+        elif request.size and request.size != "auto":
+            # Size preset
+            cmd.extend(["--size", request.size])
+        # else: auto mode (default)
 
         logger.info(f"[{job_id}] Running command: {' '.join(cmd)}")
         update_job(job_id, progress=20)

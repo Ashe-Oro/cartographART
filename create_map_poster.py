@@ -15,6 +15,66 @@ THEMES_DIR = "themes"
 FONTS_DIR = "fonts"
 POSTERS_DIR = "posters"
 
+def get_city_text_layout(city_name, max_width_chars=10):
+    """
+    Calculate optimal text layout for city name.
+    Returns dict with lines, font_size, and y_positions.
+
+    For short names: single line, full size
+    For medium names: single line, reduced size
+    For long/multi-word names: multiple lines
+    """
+    # Base font size for short names (≤8 chars)
+    base_font_size = 60
+    min_font_size = 28
+
+    words = city_name.upper().split()
+    total_chars = len(city_name.replace(" ", ""))
+
+    # Single word or short name - use single line with adjusted size
+    if len(words) == 1 or total_chars <= 8:
+        # Scale font size based on character count
+        if total_chars <= 8:
+            font_size = base_font_size
+        elif total_chars <= 12:
+            font_size = int(base_font_size * 8 / total_chars)
+        else:
+            font_size = max(min_font_size, int(base_font_size * 8 / total_chars))
+
+        spaced_text = "  ".join(list(city_name.upper().replace(" ", "")))
+        return {
+            'lines': [spaced_text],
+            'font_size': font_size,
+            'y_positions': [0.14],
+            'line_spacing': 0
+        }
+
+    # Multi-word name - split into lines
+    lines = ["  ".join(list(word)) for word in words]
+
+    # Calculate font size based on longest line
+    max_line_chars = max(len(word) for word in words)
+    if max_line_chars <= 8:
+        font_size = base_font_size
+    elif max_line_chars <= 12:
+        font_size = int(base_font_size * 8 / max_line_chars)
+    else:
+        font_size = max(min_font_size, int(base_font_size * 8 / max_line_chars))
+
+    # Calculate y positions (stack lines from bottom)
+    line_spacing = font_size * 0.0012  # Proportional spacing
+    base_y = 0.14
+    y_positions = []
+    for i in range(len(lines)):
+        y_positions.append(base_y + (len(lines) - 1 - i) * line_spacing)
+
+    return {
+        'lines': lines,
+        'font_size': font_size,
+        'y_positions': y_positions,
+        'line_spacing': line_spacing
+    }
+
 def load_fonts():
     """
     Load Roboto fonts from the fonts directory.
@@ -36,16 +96,17 @@ def load_fonts():
 
 FONTS = load_fonts()
 
-def generate_output_filename(city, theme_name):
+def generate_output_filename(city, theme_name, distance):
     """
-    Generate unique output filename with city, theme, and datetime.
+    Generate unique output filename with city, theme, distance, and datetime.
     """
     if not os.path.exists(POSTERS_DIR):
         os.makedirs(POSTERS_DIR)
-    
+
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     city_slug = city.lower().replace(' ', '_')
-    filename = f"{city_slug}_{theme_name}_{timestamp}.png"
+    dist_km = f"{distance/1000:.1f}km".replace('.0km', 'km')
+    filename = f"{city_slug}_{theme_name}_{dist_km}_{timestamp}.png"
     return os.path.join(POSTERS_DIR, filename)
 
 def get_available_themes():
@@ -193,28 +254,130 @@ def get_edge_widths_by_type(G):
     
     return edge_widths
 
+def haversine_distance(lat1, lon1, lat2, lon2):
+    """Calculate distance in meters between two lat/lon points."""
+    from math import radians, sin, cos, sqrt, atan2
+    R = 6371000  # Earth's radius in meters
+
+    lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+
+    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+    c = 2 * atan2(sqrt(a), sqrt(1-a))
+
+    return R * c
+
+# Place type to distance mapping (in meters)
+PLACE_TYPE_DISTANCES = {
+    # Small areas
+    'neighbourhood': 2000,
+    'neighborhood': 2000,
+    'suburb': 3000,
+    'quarter': 3000,
+    'hamlet': 2500,
+    'isolated_dwelling': 1500,
+    'farm': 1500,
+    'allotments': 2000,
+    # Medium areas
+    'village': 4000,
+    'borough': 5000,
+    'town': 6000,
+    'municipality': 8000,
+    # Larger areas
+    'city': 12000,
+    # Large areas (skip 'administrative' - use importance instead)
+    'county': 25000,
+    'district': 20000,
+    'region': 35000,
+    'state': 50000,
+}
+
+def get_distance_from_importance(importance):
+    """
+    Map Nominatim importance score to appropriate map distance.
+    Importance ranges roughly 0-1, with major cities near 0.8-0.9.
+    """
+    if importance < 0.40:
+        return 3000   # Small neighborhood/area
+    elif importance < 0.55:
+        return 6000   # Town/small city
+    elif importance < 0.70:
+        return 12000  # Medium city
+    elif importance < 0.85:
+        return 18000  # Large city
+    else:
+        return 25000  # Major metro
+
 def get_coordinates(city, country):
     """
     Fetches coordinates for a given city and country using geopy.
+    Returns (lat, lon) tuple and suggested distance based on place type and importance.
     Includes rate limiting to be respectful to the geocoding service.
     """
     print("Looking up coordinates...")
     geolocator = Nominatim(user_agent="city_map_poster")
-    
+
     # Add a small delay to respect Nominatim's usage policy
     time.sleep(1)
-    
+
     location = geolocator.geocode(f"{city}, {country}")
-    
+
     if location:
         print(f"✓ Found: {location.address}")
         print(f"✓ Coordinates: {location.latitude}, {location.longitude}")
-        return (location.latitude, location.longitude)
+
+        suggested_dist = None
+
+        if hasattr(location, 'raw'):
+            place_type = location.raw.get('type', '')
+            place_class = location.raw.get('class', '')
+            importance = location.raw.get('importance', 0.5)
+            print(f"✓ Place type: {place_type} (class: {place_class}, importance: {importance:.2f})")
+
+            # First, check if we have a specific mapping for this place type
+            if place_type in PLACE_TYPE_DISTANCES:
+                suggested_dist = PLACE_TYPE_DISTANCES[place_type]
+                print(f"✓ Suggested distance: {suggested_dist}m (based on place type '{place_type}')")
+            # For generic 'administrative' type, use importance score
+            elif place_type == 'administrative':
+                suggested_dist = get_distance_from_importance(importance)
+                print(f"✓ Suggested distance: {suggested_dist}m (based on importance score)")
+
+        # Fallback to bounding box if no distance determined yet
+        if suggested_dist is None and hasattr(location, 'raw') and 'boundingbox' in location.raw:
+            bbox = location.raw['boundingbox']
+            south, north, west, east = map(float, bbox)
+
+            # Calculate diagonal distance of bounding box
+            diagonal = haversine_distance(south, west, north, east)
+
+            # Use half the diagonal as radius, with some padding
+            suggested_dist = int(diagonal / 2 * 1.2)
+
+            # Clamp to reasonable bounds
+            suggested_dist = max(1500, min(suggested_dist, 50000))
+
+            print(f"✓ Suggested distance: {suggested_dist}m (based on bounding box)")
+
+        return (location.latitude, location.longitude), suggested_dist
     else:
         raise ValueError(f"Could not find coordinates for {city}, {country}")
 
-def create_poster(city, country, point, dist, output_file):
+# Size presets (in meters)
+SIZE_PRESETS = {
+    'neighborhood': 2000,
+    'small': 4000,
+    'town': 6000,
+    'city': 12000,
+    'metro': 20000,
+    'region': 35000
+}
+
+def create_poster(city, country, point, dist, output_file, preview=False):
     print(f"\nGenerating map for {city}, {country}...")
+    if preview:
+        print("  (Preview mode: 72 DPI)")
     
     # Progress bar for data fetching
     with tqdm(total=3, desc="Fetching map data", unit="step", bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}') as pbar:
@@ -250,11 +413,15 @@ def create_poster(city, country, point, dist, output_file):
     ax.set_position([0, 0, 1, 1])
     
     # 3. Plot Layers
-    # Layer 1: Polygons
+    # Layer 1: Polygons (filter out Point geometries to avoid default markers)
     if water is not None and not water.empty:
-        water.plot(ax=ax, facecolor=THEME['water'], edgecolor='none', zorder=1)
+        water_polys = water[water.geometry.type.isin(['Polygon', 'MultiPolygon'])]
+        if not water_polys.empty:
+            water_polys.plot(ax=ax, facecolor=THEME['water'], edgecolor='none', zorder=1)
     if parks is not None and not parks.empty:
-        parks.plot(ax=ax, facecolor=THEME['parks'], edgecolor='none', zorder=2)
+        park_polys = parks[parks.geometry.type.isin(['Polygon', 'MultiPolygon'])]
+        if not park_polys.empty:
+            park_polys.plot(ax=ax, facecolor=THEME['parks'], edgecolor='none', zorder=2)
     
     # Layer 2: Roads with hierarchy coloring
     print("Applying road hierarchy colors...")
@@ -274,36 +441,46 @@ def create_poster(city, country, point, dist, output_file):
     create_gradient_fade(ax, THEME['gradient_color'], location='top', zorder=10)
     
     # 4. Typography using Roboto font
+    # Get optimal layout for city name
+    city_layout = get_city_text_layout(city)
+    city_font_size = city_layout['font_size']
+
     if FONTS:
-        font_main = FontProperties(fname=FONTS['bold'], size=60)
-        font_top = FontProperties(fname=FONTS['bold'], size=40)
+        font_main = FontProperties(fname=FONTS['bold'], size=city_font_size)
         font_sub = FontProperties(fname=FONTS['light'], size=22)
         font_coords = FontProperties(fname=FONTS['regular'], size=14)
     else:
         # Fallback to system fonts
-        font_main = FontProperties(family='monospace', weight='bold', size=60)
-        font_top = FontProperties(family='monospace', weight='bold', size=40)
+        font_main = FontProperties(family='monospace', weight='bold', size=city_font_size)
         font_sub = FontProperties(family='monospace', weight='normal', size=22)
         font_coords = FontProperties(family='monospace', size=14)
-    
-    spaced_city = "  ".join(list(city.upper()))
 
     # --- BOTTOM TEXT ---
-    ax.text(0.5, 0.14, spaced_city, transform=ax.transAxes,
-            color=THEME['text'], ha='center', fontproperties=font_main, zorder=11)
-    
-    ax.text(0.5, 0.10, country.upper(), transform=ax.transAxes,
+    # Render city name (may be multiple lines)
+    num_lines = len(city_layout['lines'])
+    for i, (line, y_pos) in enumerate(zip(city_layout['lines'], city_layout['y_positions'])):
+        ax.text(0.5, y_pos, line, transform=ax.transAxes,
+                color=THEME['text'], ha='center', fontproperties=font_main, zorder=11)
+
+    # Adjust country and coords position based on number of city lines
+    top_city_y = max(city_layout['y_positions'])
+    line_height = city_layout['line_spacing'] if city_layout['line_spacing'] > 0 else 0.04
+    country_y = min(city_layout['y_positions']) - 0.04
+    coords_y = country_y - 0.03
+    line_y = country_y + 0.025
+
+    ax.text(0.5, country_y, country.upper(), transform=ax.transAxes,
             color=THEME['text'], ha='center', fontproperties=font_sub, zorder=11)
-    
+
     lat, lon = point
     coords = f"{lat:.4f}° N / {lon:.4f}° E" if lat >= 0 else f"{abs(lat):.4f}° S / {lon:.4f}° E"
     if lon < 0:
         coords = coords.replace("E", "W")
-    
-    ax.text(0.5, 0.07, coords, transform=ax.transAxes,
+
+    ax.text(0.5, coords_y, coords, transform=ax.transAxes,
             color=THEME['text'], alpha=0.7, ha='center', fontproperties=font_coords, zorder=11)
-    
-    ax.plot([0.4, 0.6], [0.125, 0.125], transform=ax.transAxes, 
+
+    ax.plot([0.4, 0.6], [line_y, line_y], transform=ax.transAxes,
             color=THEME['text'], linewidth=1, zorder=11)
 
     # --- ATTRIBUTION (bottom right) ---
@@ -317,8 +494,9 @@ def create_poster(city, country, point, dist, output_file):
             fontproperties=font_attr, zorder=11)
 
     # 5. Save
+    dpi = 72 if preview else 300
     print(f"Saving to {output_file}...")
-    plt.savefig(output_file, dpi=300, facecolor=THEME['bg'])
+    plt.savefig(output_file, dpi=dpi, facecolor=THEME['bg'])
     plt.close()
     print(f"✓ Done! Poster saved as {output_file}")
 
@@ -419,7 +597,11 @@ Examples:
     parser.add_argument('--city', '-c', type=str, help='City name')
     parser.add_argument('--country', '-C', type=str, help='Country name')
     parser.add_argument('--theme', '-t', type=str, default='feature_based', help='Theme name (default: feature_based)')
-    parser.add_argument('--distance', '-d', type=int, default=29000, help='Map radius in meters (default: 29000)')
+    parser.add_argument('--distance', '-d', type=int, default=None, help='Map radius in meters (default: auto)')
+    parser.add_argument('--auto', '-a', action='store_true', help='Auto-calculate distance from area size (default if no distance specified)')
+    parser.add_argument('--size', '-s', type=str, choices=['neighborhood', 'small', 'town', 'city', 'metro', 'region'],
+                        help='Size preset: neighborhood (2km), small (4km), town (6km), city (12km), metro (20km), region (35km)')
+    parser.add_argument('--preview', '-p', action='store_true', help='Generate low-res preview (72 DPI instead of 300)')
     parser.add_argument('--list-themes', action='store_true', help='List all available themes')
     
     args = parser.parse_args()
@@ -456,9 +638,24 @@ Examples:
     
     # Get coordinates and generate poster
     try:
-        coords = get_coordinates(args.city, args.country)
-        output_file = generate_output_filename(args.city, args.theme)
-        create_poster(args.city, args.country, coords, args.distance, output_file)
+        coords, suggested_dist = get_coordinates(args.city, args.country)
+
+        # Determine distance to use (priority: --distance > --size > auto/suggested)
+        if args.distance is not None:
+            dist = args.distance
+            print(f"✓ Using specified distance: {dist}m")
+        elif args.size:
+            dist = SIZE_PRESETS[args.size]
+            print(f"✓ Using size preset '{args.size}': {dist}m")
+        elif suggested_dist:
+            dist = suggested_dist
+            print(f"✓ Using auto-calculated distance: {dist}m")
+        else:
+            dist = 12000  # Default fallback
+            print(f"✓ Using default distance: {dist}m")
+
+        output_file = generate_output_filename(args.city, args.theme, dist)
+        create_poster(args.city, args.country, coords, dist, output_file, preview=args.preview)
         
         print("\n" + "=" * 50)
         print("✓ Poster generation complete!")

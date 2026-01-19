@@ -15,12 +15,23 @@ class ThemesResponse(BaseModel):
     themes: List[ThemeInfo]
 
 
+class SizePreset(str, Enum):
+    AUTO = "auto"
+    NEIGHBORHOOD = "neighborhood"
+    SMALL = "small"
+    TOWN = "town"
+    CITY = "city"
+    METRO = "metro"
+    REGION = "region"
+
+
 class PosterRequest(BaseModel):
     city: str = Field(..., min_length=1, max_length=100, examples=["Tokyo"])
     state: Optional[str] = Field(default=None, max_length=100, examples=["Virginia"])
     country: str = Field(..., min_length=1, max_length=100, examples=["Japan"])
     theme: str = Field(default="feature_based", examples=["noir"])
-    distance: int = Field(default=10000, ge=3000, le=50000)
+    size: SizePreset = Field(default=SizePreset.AUTO, examples=["city"])
+    distance: Optional[int] = Field(default=None, ge=1000, le=50000)
 
 
 class JobStatus(str, Enum):
