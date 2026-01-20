@@ -1,46 +1,33 @@
 # TODO List - City Map Poster Generator
 
-## Local Caching for Map Data
+## ✅ Local Caching for Map Data (COMPLETED)
 
-**Priority:** High
-**Impact:** Dramatically faster poster generation for repeat/popular locations
+**Status:** Implemented in `cache.py`
 
-### Options
-- SQLite database
-- Pickle files (keyed by city_country_distance)
+### Implementation Details
+- **Storage:** Pickle files (not SQLite - simpler, no dependencies)
+- **Cache key:** `{city}_{country}_{distance}` (normalized/slugified)
+- **Stored data:** street graph, water features, parks (as pickled objects)
+- **Metadata:** JSON file with coordinates, timestamp, city/country
+- **Cache expiry:** 30 days
+- **Location:** `cache/` directory
 
-### Implementation
-1. Before fetching from Overpass API, check local cache first
-2. Cache key: `{city}_{country}_{distance}` (normalized/slugified)
-3. Store: street graph (pickled NetworkX), water features (pickled GeoDataFrame)
-4. Each new fetch should be saved to cache after retrieval
-5. Add cache expiry (e.g., 30 days) to get updated OSM data periodically
-6. Pre-populate cache with popular cities for instant generation
-
-### Benefits
-- Instant generation for repeat/popular locations
-- Reduces load on Overpass API
-- Works offline for cached cities
+### Results
+- Theme swaps for cached locations: **~0.87 seconds** (down from 2-3 minutes)
+- Skips both geocoding and OSM API calls on cache hit
+- Add `--no-cache` flag to bypass cache when needed
 
 ---
 
-## Retheme Optimization
+## ✅ Retheme Optimization (COMPLETED)
 
-**Priority:** High
-**Impact:** Retheme goes from 2-3 minutes to a few seconds
+**Status:** Achieved through caching implementation
 
-### Problem
-- Currently retheme re-fetches all data from Overpass API (slow!)
-- Theme is just colors - should be instant
-
-### Solution
-- With caching implemented, retheme would hit cache and skip API calls
-- Only re-render with new theme colors
-- Alternative: save `{job_id}_data.pkl` alongside poster for job-specific caching
-
-### Expected Improvement
-- Current: 2-3 minutes per retheme
-- After: Few seconds (render only)
+### Results
+- Previous: 2-3 minutes per retheme (re-fetched all data)
+- Now: **< 1 second** for cached locations
+- Cached coordinates skip Nominatim geocoding
+- Cached map data skips Overpass API calls
 
 ---
 
