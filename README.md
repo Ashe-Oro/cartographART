@@ -84,6 +84,29 @@ python create_map_poster.py --list-themes
 | 8000-12000m | Medium cities, focused downtown (Paris, Barcelona) |
 | 15000-20000m | Large metros, full city view (Tokyo, Mumbai) |
 
+## Web Interface
+
+A FastAPI web service with an HTML frontend is also available.
+
+### Running the Server
+
+```bash
+python3 -m uvicorn app.main:app --reload --port 8000
+```
+
+Then open http://localhost:8000 in your browser.
+
+### API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/` | GET | Web frontend |
+| `/docs` | GET | Interactive API documentation |
+| `/health` | GET | Health check |
+| `/themes` | GET | List available themes |
+| `/posters` | POST | Generate a poster |
+| `/jobs/{id}` | GET | Check job status |
+
 ## Themes
 
 17 themes available in `themes/` directory:
@@ -141,7 +164,12 @@ Create a JSON file in `themes/` directory:
 
 ```
 map_poster/
-├── create_map_poster.py          # Main script
+├── create_map_poster.py  # CLI script
+├── app/                  # FastAPI web service
+│   ├── main.py           # App entry point
+│   ├── routers/          # API route handlers
+│   └── services/         # Business logic
+├── static/               # Frontend HTML/CSS/JS
 ├── themes/               # Theme JSON files
 ├── fonts/                # Roboto font files
 ├── posters/              # Generated posters

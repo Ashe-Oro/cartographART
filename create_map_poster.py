@@ -11,6 +11,8 @@ import os
 from datetime import datetime
 import argparse
 
+from cache import get_cache_key, load_from_cache, save_to_cache, is_cache_valid, get_cache_path, find_cached_location
+
 THEMES_DIR = "themes"
 FONTS_DIR = "fonts"
 POSTERS_DIR = "posters"
@@ -374,19 +376,61 @@ SIZE_PRESETS = {
     'region': 35000
 }
 
-def create_poster(city, country, point, dist, output_file, preview=False):
-    print(f"\nGenerating map for {city}, {country}...")
-    if preview:
-        print("  (Preview mode: 72 DPI)")
-    
-    # Progress bar for data fetching
+def get_cached_coords(city, country, dist):
+    """
+    Check if we have cached data for this location and return cached coordinates.
+    This allows skipping geocoding for cached locations.
+
+    Returns:
+        tuple (lat, lon) if cached, None otherwise
+    """
+    cache_key = get_cache_key(city, country, dist)
+    cache_path = get_cache_path(cache_key)
+    meta_file = cache_path / "meta.json"
+
+    if not meta_file.exists():
+        return None
+
+    try:
+        import json
+        with open(meta_file, "r") as f:
+            meta = json.load(f)
+        return tuple(meta["coords"])
+    except:
+        return None
+
+
+def fetch_map_data(city, country, point, dist, use_cache=True):
+    """
+    Fetch map data from cache or OSM API.
+
+    Returns:
+        dict with keys: graph, water, parks
+    """
+    cache_key = get_cache_key(city, country, dist)
+
+    # Try cache first
+    if use_cache:
+        print(f"Checking cache for {cache_key}...")
+        cached = load_from_cache(cache_key)
+        if cached:
+            print(f"✓ Cache hit! Using cached data from {cached['cached_at']}")
+            return {
+                "graph": cached["graph"],
+                "water": cached["water"],
+                "parks": cached["parks"],
+                "from_cache": True,
+            }
+        print("  Cache miss, fetching from API...")
+
+    # Fetch from API
     with tqdm(total=3, desc="Fetching map data", unit="step", bar_format='{l_bar}{bar}| {n_fmt}/{total_fmt}') as pbar:
         # 1. Fetch Street Network
         pbar.set_description("Downloading street network")
         G = ox.graph_from_point(point, dist=dist, dist_type='bbox', network_type='all')
         pbar.update(1)
         time.sleep(0.5)  # Rate limit between requests
-        
+
         # 2. Fetch Water Features
         pbar.set_description("Downloading water features")
         try:
@@ -395,7 +439,7 @@ def create_poster(city, country, point, dist, output_file, preview=False):
             water = None
         pbar.update(1)
         time.sleep(0.3)
-        
+
         # 3. Fetch Parks
         pbar.set_description("Downloading parks/green spaces")
         try:
@@ -403,8 +447,36 @@ def create_poster(city, country, point, dist, output_file, preview=False):
         except:
             parks = None
         pbar.update(1)
-    
+
     print("✓ All data downloaded successfully!")
+
+    # Save to cache
+    if use_cache:
+        save_to_cache(cache_key, G, water, parks, point, city, country, dist)
+
+    return {
+        "graph": G,
+        "water": water,
+        "parks": parks,
+        "from_cache": False,
+    }
+
+
+def create_poster(city, country, point, dist, output_file, preview=False, use_cache=True, map_data=None):
+    print(f"\nGenerating map for {city}, {country}...")
+    if preview:
+        print("  (Preview mode: 72 DPI)")
+
+    # Fetch data if not provided
+    if map_data is None:
+        map_data = fetch_map_data(city, country, point, dist, use_cache=use_cache)
+
+    G = map_data["graph"]
+    water = map_data["water"]
+    parks = map_data["parks"]
+
+    if map_data.get("from_cache"):
+        print("✓ Using cached map data")
     
     # 2. Setup Plot
     print("Rendering map...")
@@ -602,6 +674,7 @@ Examples:
     parser.add_argument('--size', '-s', type=str, choices=['neighborhood', 'small', 'town', 'city', 'metro', 'region'],
                         help='Size preset: neighborhood (2km), small (4km), town (6km), city (12km), metro (20km), region (35km)')
     parser.add_argument('--preview', '-p', action='store_true', help='Generate low-res preview (72 DPI instead of 300)')
+    parser.add_argument('--no-cache', action='store_true', help='Bypass cache and fetch fresh data from API')
     parser.add_argument('--list-themes', action='store_true', help='List all available themes')
     
     args = parser.parse_args()
@@ -638,24 +711,40 @@ Examples:
     
     # Get coordinates and generate poster
     try:
-        coords, suggested_dist = get_coordinates(args.city, args.country)
+        use_cache = not args.no_cache
+        coords = None
+        dist = None
 
-        # Determine distance to use (priority: --distance > --size > auto/suggested)
-        if args.distance is not None:
-            dist = args.distance
-            print(f"✓ Using specified distance: {dist}m")
-        elif args.size:
-            dist = SIZE_PRESETS[args.size]
-            print(f"✓ Using size preset '{args.size}': {dist}m")
-        elif suggested_dist:
-            dist = suggested_dist
-            print(f"✓ Using auto-calculated distance: {dist}m")
-        else:
-            dist = 12000  # Default fallback
-            print(f"✓ Using default distance: {dist}m")
+        # Fast path: check if we have cached data for this location (skip geocoding)
+        if use_cache and not args.distance and not args.size:
+            cached_meta = find_cached_location(args.city, args.country)
+            if cached_meta:
+                coords = tuple(cached_meta["coords"])
+                dist = cached_meta["distance"]
+                print(f"✓ Found cached location: {args.city}, {args.country}")
+                print(f"✓ Using cached coordinates: {coords[0]:.4f}, {coords[1]:.4f}")
+                print(f"✓ Using cached distance: {dist}m")
+
+        # If no cache hit, do geocoding
+        if coords is None:
+            coords, suggested_dist = get_coordinates(args.city, args.country)
+
+            # Determine distance to use (priority: --distance > --size > auto/suggested)
+            if args.distance is not None:
+                dist = args.distance
+                print(f"✓ Using specified distance: {dist}m")
+            elif args.size:
+                dist = SIZE_PRESETS[args.size]
+                print(f"✓ Using size preset '{args.size}': {dist}m")
+            elif suggested_dist:
+                dist = suggested_dist
+                print(f"✓ Using auto-calculated distance: {dist}m")
+            else:
+                dist = 12000  # Default fallback
+                print(f"✓ Using default distance: {dist}m")
 
         output_file = generate_output_filename(args.city, args.theme, dist)
-        create_poster(args.city, args.country, coords, dist, output_file, preview=args.preview)
+        create_poster(args.city, args.country, coords, dist, output_file, preview=args.preview, use_cache=use_cache)
         
         print("\n" + "=" * 50)
         print("✓ Poster generation complete!")
