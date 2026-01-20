@@ -1,7 +1,7 @@
 const API_BASE = '';
 const PHOTON_API = 'https://photon.komoot.io/api';
 let currentJobId = null;
-let pollInterval = null;
+let websocket = null;  // WebSocket connection
 let startTime = null;
 let searchTimeout = null;
 let selectedLocation = null;
@@ -375,11 +375,11 @@ async function submitPosterRequest(request, hideSection) {
         const result = await response.json();
         currentJobId = result.job_id;
 
-        document.getElementById('status-text').textContent = 'Fetching cartographic data...';
+        document.getElementById('status-text').textContent = 'Connecting to server...';
         startTime = Date.now();
 
-        // Start polling for status
-        pollJobStatus();
+        // Connect WebSocket for real-time updates
+        connectJobWebSocket(currentJobId);
 
     } catch (error) {
         console.error('Request failed:', error);
@@ -412,7 +412,96 @@ async function applyNewTheme() {
     submitPosterRequest(request, 'result');
 }
 
-// Poll job status
+// Connect to WebSocket for real-time job updates
+function connectJobWebSocket(jobId) {
+    // Determine WebSocket URL (ws:// or wss:// based on current protocol)
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/jobs/${jobId}`;
+
+    console.log(`Connecting to WebSocket: ${wsUrl}`);
+    websocket = new WebSocket(wsUrl);
+
+    websocket.onopen = () => {
+        console.log('WebSocket connected');
+    };
+
+    websocket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        console.log('WebSocket message:', data);
+
+        if (data.type === 'job_update') {
+            handleJobUpdate(data);
+        }
+    };
+
+    websocket.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        // Fall back to polling if WebSocket fails
+        fallbackToPolling();
+    };
+
+    websocket.onclose = (event) => {
+        console.log('WebSocket closed:', event.code, event.reason);
+        websocket = null;
+    };
+}
+
+// Close WebSocket connection
+function closeWebSocket() {
+    if (websocket) {
+        websocket.close();
+        websocket = null;
+    }
+}
+
+// Handle job update from WebSocket
+function handleJobUpdate(data) {
+    // Update progress bar
+    document.getElementById('progress').style.width = `${data.progress}%`;
+
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    const timeStr = elapsed > 60
+        ? `${Math.floor(elapsed / 60)}m ${elapsed % 60}s`
+        : `${elapsed}s`;
+
+    switch (data.status) {
+        case 'pending':
+            document.getElementById('status-text').textContent = 'Queued for processing...';
+            break;
+
+        case 'processing':
+            // Use message from server if available, otherwise use default
+            const message = data.message || 'Processing...';
+            document.getElementById('status-text').textContent = `${message} (${timeStr})`;
+            break;
+
+        case 'completed':
+            stopTitleRotation();
+            closeWebSocket();
+            showResult({
+                job_id: data.job_id,
+                status: data.status,
+                download_url: data.download_url
+            });
+            break;
+
+        case 'failed':
+            stopTitleRotation();
+            closeWebSocket();
+            document.getElementById('status-text').textContent =
+                `Generation failed: ${data.error || 'Unknown error'}`;
+            document.querySelector('.status-rings').style.display = 'none';
+            break;
+    }
+}
+
+// Fallback to polling if WebSocket fails
+function fallbackToPolling() {
+    console.log('Falling back to polling...');
+    pollJobStatus();
+}
+
+// Poll job status (fallback for WebSocket failure)
 async function pollJobStatus() {
     if (!currentJobId) return;
 
@@ -420,48 +509,22 @@ async function pollJobStatus() {
         const response = await fetch(`${API_BASE}/api/jobs/${currentJobId}`);
         const job = await response.json();
 
-        // Update progress bar
-        document.getElementById('progress').style.width = `${job.progress}%`;
+        handleJobUpdate({
+            job_id: job.job_id,
+            status: job.status,
+            progress: job.progress,
+            message: job.message,
+            error: job.error,
+            download_url: job.download_url
+        });
 
-        switch (job.status) {
-            case 'pending':
-                document.getElementById('status-text').textContent = 'Queued for processing...';
-                pollInterval = setTimeout(pollJobStatus, 2000);
-                break;
-
-            case 'processing':
-                const elapsed = Math.floor((Date.now() - startTime) / 1000);
-                const messages = [
-                    'Downloading street network...',
-                    'Mapping water features...',
-                    'Rendering road hierarchy...',
-                    'Applying theme aesthetics...',
-                    'Compositing final artwork...'
-                ];
-                const msgIndex = Math.min(Math.floor(job.progress / 25), messages.length - 1);
-                const timeStr = elapsed > 60
-                    ? `${Math.floor(elapsed / 60)}m ${elapsed % 60}s`
-                    : `${elapsed}s`;
-                document.getElementById('status-text').textContent =
-                    `${messages[msgIndex]} (${timeStr})`;
-                pollInterval = setTimeout(pollJobStatus, 3000);
-                break;
-
-            case 'completed':
-                stopTitleRotation();
-                showResult(job);
-                break;
-
-            case 'failed':
-                stopTitleRotation();
-                document.getElementById('status-text').textContent =
-                    `Generation failed: ${job.error}`;
-                document.querySelector('.status-rings').style.display = 'none';
-                break;
+        // Continue polling if not finished
+        if (job.status === 'pending' || job.status === 'processing') {
+            setTimeout(pollJobStatus, 3000);
         }
     } catch (error) {
         console.error('Status check failed:', error);
-        pollInterval = setTimeout(pollJobStatus, 5000);
+        setTimeout(pollJobStatus, 5000);
     }
 }
 
@@ -496,7 +559,7 @@ function resetForm() {
     currentJobId = null;
     startTime = null;
     selectedLocation = null;
-    if (pollInterval) clearTimeout(pollInterval);
+    closeWebSocket();  // Close any open WebSocket connection
 
     document.getElementById('result').classList.add('hidden');
     document.getElementById('order-form').classList.remove('hidden');

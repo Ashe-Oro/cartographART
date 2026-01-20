@@ -3,8 +3,10 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pathlib import Path
 
-from .routers import themes, jobs, posters
+from .routers import themes, jobs, posters, websocket
 from .models import HealthResponse
+from .services.job_manager import set_notify_callback
+from .services.websocket_manager import notify_job_update
 
 app = FastAPI(
     title="City Map Poster Service",
@@ -12,10 +14,14 @@ app = FastAPI(
     version="0.1.0",
 )
 
+# Register WebSocket notification callback
+set_notify_callback(notify_job_update)
+
 # Include routers
 app.include_router(themes.router)
 app.include_router(jobs.router)
 app.include_router(posters.router)
+app.include_router(websocket.router)
 
 # Mount static files
 static_dir = Path(__file__).parent.parent / "static"

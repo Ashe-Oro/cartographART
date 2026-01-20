@@ -16,6 +16,7 @@ async def get_job_status(job_id: str):
         job_id=job["id"],
         status=job["status"],
         progress=job.get("progress", 0),
+        message=job.get("message"),
         error=job.get("error"),
     )
 

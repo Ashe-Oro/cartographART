@@ -20,7 +20,7 @@ def generate_poster_task(job_id: str, request):
             city_with_state = f"{request.city}, {request.state}"
 
         logger.info(f"[{job_id}] Starting poster generation for {city_with_state}, {request.country}")
-        update_job(job_id, status=JobStatus.PROCESSING, progress=10)
+        update_job(job_id, status=JobStatus.PROCESSING, progress=5, message="Initializing...")
 
         output_file = settings.data_dir / f"{job_id}.png"
 
@@ -47,7 +47,7 @@ def generate_poster_task(job_id: str, request):
         # else: auto mode (default)
 
         logger.info(f"[{job_id}] Running command: {' '.join(cmd)}")
-        update_job(job_id, progress=20)
+        update_job(job_id, progress=15, message="Fetching map data from OpenStreetMap...")
 
         # Run maptoposter as subprocess with longer timeout
         result = subprocess.run(
@@ -64,7 +64,7 @@ def generate_poster_task(job_id: str, request):
         if result.stderr:
             logger.warning(f"[{job_id}] stderr: {result.stderr[:500]}")
 
-        update_job(job_id, progress=80)
+        update_job(job_id, progress=80, message="Finalizing poster...")
 
         if result.returncode != 0:
             raise Exception(f"Generation failed: {result.stderr}")
