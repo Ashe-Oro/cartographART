@@ -160,6 +160,11 @@ body {
     margin-bottom: var(--space-lg);
     padding-bottom: var(--space-lg);
     border-bottom: 1px solid var(--ink-medium);
+    position: relative;
+}
+
+.form-section:first-child {
+    z-index: 10;
 }
 
 .form-section:last-of-type {
@@ -974,6 +979,7 @@ body {
 /* Autocomplete */
 .autocomplete-wrapper {
     position: relative;
+    z-index: 100;
 }
 
 .autocomplete-results {
@@ -981,13 +987,13 @@ body {
     top: 100%;
     left: 0;
     right: 0;
-    background: var(--ink);
+    background: #0a0a0a;
     border: 1px solid var(--ink-medium);
     border-top: none;
     border-radius: 0 0 6px 6px;
     max-height: 250px;
     overflow-y: auto;
-    z-index: 200;
+    z-index: 1000;
     box-shadow: 0 12px 40px -10px rgba(0,0,0,0.5);
 }
 
@@ -996,6 +1002,7 @@ body {
     cursor: pointer;
     border-bottom: 1px solid var(--ink-medium);
     transition: background 0.2s var(--ease-out);
+    background: #0a0a0a;
 }
 
 .autocomplete-item:last-child {
