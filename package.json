@@ -1,0 +1,22 @@
+{
+  "name": "cartograph-frontend",
+  "version": "1.0.0",
+  "description": "Frontend for Cartograph map poster service",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@playwright/test": "^1.57.0",
+    "@reown/appkit": "^1.6.8",
+    "@reown/appkit-adapter-wagmi": "^1.6.8",
+    "@tanstack/react-query": "^5.62.16",
+    "viem": "^2.23.2",
+    "wagmi": "^2.14.11"
+  },
+  "devDependencies": {
+    "vite": "^6.0.0"
+  }
+}

@@ -15,8 +15,13 @@
 
     <!-- Floating nav -->
     <nav class="floating-nav">
-        <div class="nav-logo">CARTOGRAPH</div>
-        <div class="nav-tagline">Bespoke City Prints</div>
+        <div class="nav-left">
+            <div class="nav-logo">CARTOGRAPH</div>
+            <div class="nav-tagline">Bespoke City Prints</div>
+        </div>
+        <div class="nav-right">
+            <appkit-button></appkit-button>
+        </div>
     </nav>
 
     <main class="app-container">
@@ -227,6 +232,6 @@
         </div>
     </footer>
 
-    <script src="/static/js/app.js"></script>
+    <script type="module" src="/static/dist/app.bundle.js"></script>
 </body>
 </html>
