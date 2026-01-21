@@ -14,7 +14,7 @@ export async function generatePoster(jobId, request) {
 
   // Build the command arguments
   const args = [
-    join(config.maptoposterDir, 'maptoposter.py'),
+    join(config.maptoposterDir, 'create_map_poster.py'),
     '--city', city,
     '--country', country,
     '--theme', theme || 'feature_based',
@@ -43,14 +43,14 @@ export async function generatePoster(jobId, request) {
   return new Promise((resolve, reject) => {
     console.log(`[Job ${jobId}] Starting: python3 ${args.join(' ')}`);
 
-    const process = spawn('python3', args, {
+    const childProcess = spawn('python3', args, {
       cwd: config.maptoposterDir,
       env: { ...process.env, PYTHONUNBUFFERED: '1' },
     });
 
     let stderr = '';
 
-    process.stdout.on('data', (data) => {
+    childProcess.stdout.on('data', (data) => {
       const output = data.toString().trim();
       console.log(`[Job ${jobId}] ${output}`);
 
@@ -85,12 +85,12 @@ export async function generatePoster(jobId, request) {
       }
     });
 
-    process.stderr.on('data', (data) => {
+    childProcess.stderr.on('data', (data) => {
       stderr += data.toString();
       console.error(`[Job ${jobId}] stderr: ${data.toString().trim()}`);
     });
 
-    process.on('close', (code) => {
+    childProcess.on('close', (code) => {
       if (code === 0) {
         console.log(`[Job ${jobId}] Completed successfully`);
         updateJob(jobId, {
@@ -109,7 +109,7 @@ export async function generatePoster(jobId, request) {
       }
     });
 
-    process.on('error', (error) => {
+    childProcess.on('error', (error) => {
       console.error(`[Job ${jobId}] Process error:`, error);
       updateJob(jobId, {
         status: JobStatus.FAILED,

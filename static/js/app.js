@@ -323,7 +323,7 @@ async function handleSubmit(event) {
 
     // Check wallet connection - prompt to connect if not connected
     if (!isConnected()) {
-        const shouldConnect = confirm('Wallet not connected. This poster costs $0.75 USDC. Connect wallet to proceed?');
+        const shouldConnect = confirm('Wallet not connected. This poster costs $0.001 USDC. Connect wallet to proceed?');
         if (shouldConnect) {
             await openModal();
             // Wait a moment for connection
@@ -442,7 +442,7 @@ async function applyNewTheme() {
 
     // Check wallet connection for re-theming (also requires payment)
     if (!isConnected()) {
-        const shouldConnect = confirm('Wallet not connected. Re-theming costs $0.75 USDC. Connect wallet to proceed?');
+        const shouldConnect = confirm('Wallet not connected. Re-theming costs $0.001 USDC. Connect wallet to proceed?');
         if (shouldConnect) {
             await openModal();
             await new Promise(resolve => setTimeout(resolve, 1000));

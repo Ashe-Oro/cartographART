@@ -667,7 +667,9 @@ Examples:
     )
     
     parser.add_argument('--city', '-c', type=str, help='City name')
+    parser.add_argument('--state', '-S', type=str, help='State/province name (optional, improves geocoding)')
     parser.add_argument('--country', '-C', type=str, help='Country name')
+    parser.add_argument('--output', '-o', type=str, help='Output file path (default: auto-generated in posters/)')
     parser.add_argument('--theme', '-t', type=str, default='feature_based', help='Theme name (default: feature_based)')
     parser.add_argument('--distance', '-d', type=int, default=None, help='Map radius in meters (default: auto)')
     parser.add_argument('--auto', '-a', action='store_true', help='Auto-calculate distance from area size (default if no distance specified)')
@@ -717,7 +719,8 @@ Examples:
 
         # Fast path: check if we have cached data for this location (skip geocoding)
         if use_cache and not args.distance and not args.size:
-            cached_meta = find_cached_location(args.city, args.country)
+            city_for_cache = f"{args.city}, {args.state}" if args.state else args.city
+            cached_meta = find_cached_location(city_for_cache, args.country)
             if cached_meta:
                 coords = tuple(cached_meta["coords"])
                 dist = cached_meta["distance"]
@@ -727,7 +730,9 @@ Examples:
 
         # If no cache hit, do geocoding
         if coords is None:
-            coords, suggested_dist = get_coordinates(args.city, args.country)
+            # Include state in city name for better geocoding if provided
+            city_query = f"{args.city}, {args.state}" if args.state else args.city
+            coords, suggested_dist = get_coordinates(city_query, args.country)
 
             # Determine distance to use (priority: --distance > --size > auto/suggested)
             if args.distance is not None:
@@ -743,7 +748,11 @@ Examples:
                 dist = 12000  # Default fallback
                 print(f"✓ Using default distance: {dist}m")
 
-        output_file = generate_output_filename(args.city, args.theme, dist)
+        # Use custom output path if provided, otherwise auto-generate
+        if args.output:
+            output_file = args.output
+        else:
+            output_file = generate_output_filename(args.city, args.theme, dist)
         create_poster(args.city, args.country, coords, dist, output_file, preview=args.preview, use_cache=use_cache)
         
         print("\n" + "=" * 50)

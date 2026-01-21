@@ -1,3 +1,4 @@
+from typing import Optional
 from pydantic_settings import BaseSettings
 from pathlib import Path
 
@@ -6,6 +7,9 @@ class Settings(BaseSettings):
     # x402 Payment
     pay_to_address: str = "0x0000000000000000000000000000000000000000"
     x402_network: str = "base-sepolia"
+    network_id: Optional[str] = None  # Alternative: eip155:84532 for base-sepolia
+    facilitator_url: str = "https://x402.org/facilitator"
+    buyer_private_key: Optional[str] = None  # For testing x402 payments
 
     # Pricing
     poster_price: float = 0.75
@@ -23,6 +27,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
+        extra = "ignore"  # Ignore extra env vars like VITE_*
 
 
 settings = Settings()
