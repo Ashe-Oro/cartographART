@@ -4,7 +4,6 @@ const API_BASE = '';
 const PHOTON_API = 'https://photon.komoot.io/api';
 let currentJobId = null;
 let websocket = null;  // WebSocket connection
-let startTime = null;
 let searchTimeout = null;
 let selectedLocation = null;
 let lastRequest = null;  // Store last request for re-theming
@@ -12,6 +11,10 @@ let selectedRetheme = null;  // Selected theme in result view
 let currentTheme = null;
 let titleRotationInterval = null;
 let currentTitleIndex = 0;
+let startTime = null;
+let statusTimerInterval = null;
+let currentStatusMessage = 'Processing...';
+let currentProgress = 0;
 
 // Witty status titles to rotate through while generating
 const statusTitles = [
@@ -28,6 +31,34 @@ const statusTitles = [
     "Sketching the Cityscape",
     "Inking the Roads"
 ];
+
+// Update status text with elapsed time
+function updateStatusWithTime() {
+    if (!startTime) return;
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    const timeStr = elapsed > 60
+        ? `${Math.floor(elapsed / 60)}m ${elapsed % 60}s`
+        : `${elapsed}s`;
+    document.getElementById('status-text').textContent = `${currentStatusMessage} (${currentProgress}% - ${timeStr})`;
+}
+
+// Start the status timer
+function startStatusTimer() {
+    startTime = Date.now();
+    currentStatusMessage = 'Processing...';
+    currentProgress = 0;
+    // Update every second
+    statusTimerInterval = setInterval(updateStatusWithTime, 1000);
+}
+
+// Stop the status timer
+function stopStatusTimer() {
+    if (statusTimerInterval) {
+        clearInterval(statusTimerInterval);
+        statusTimerInterval = null;
+    }
+    startTime = null;
+}
 
 // Load gallery on page load
 async function loadGallery() {
@@ -510,7 +541,7 @@ async function submitPosterRequest(request, hideSection) {
         currentJobId = result.job_id;
 
         document.getElementById('status-text').textContent = 'Payment confirmed! Connecting to server...';
-        startTime = Date.now();
+        startStatusTimer();
 
         // Connect WebSocket for real-time updates
         connectJobWebSocket(currentJobId);
@@ -609,10 +640,13 @@ function handleJobUpdate(data) {
     // Update progress bar
     document.getElementById('progress').style.width = `${data.progress}%`;
 
-    const elapsed = Math.floor((Date.now() - startTime) / 1000);
-    const timeStr = elapsed > 60
-        ? `${Math.floor(elapsed / 60)}m ${elapsed % 60}s`
-        : `${elapsed}s`;
+    const progress = data.progress || 0;
+
+    // Store the current status message for the timer to use
+    if (data.status === 'processing') {
+        currentStatusMessage = data.message || 'Processing...';
+        currentProgress = progress;
+    }
 
     switch (data.status) {
         case 'pending':
@@ -620,13 +654,13 @@ function handleJobUpdate(data) {
             break;
 
         case 'processing':
-            // Use message from server if available, otherwise use default
-            const message = data.message || 'Processing...';
-            document.getElementById('status-text').textContent = `${message} (${timeStr})`;
+            // Message will be updated by the timer interval
+            updateStatusWithTime();
             break;
 
         case 'completed':
             stopTitleRotation();
+            stopStatusTimer();
             closeWebSocket();
             showResult({
                 job_id: data.job_id,
@@ -637,6 +671,7 @@ function handleJobUpdate(data) {
 
         case 'failed':
             stopTitleRotation();
+            stopStatusTimer();
             closeWebSocket();
             document.getElementById('status-text').textContent =
                 `Generation failed: ${data.error || 'Unknown error'}`;
@@ -710,8 +745,8 @@ function showResult(job) {
 // Reset to create another poster
 function resetForm() {
     currentJobId = null;
-    startTime = null;
     selectedLocation = null;
+    stopStatusTimer();
     closeWebSocket();  // Close any open WebSocket connection
 
     document.getElementById('result').classList.add('hidden');
@@ -752,12 +787,40 @@ function resetForm() {
     if (previewCountry) previewCountry.textContent = 'AWAITS';
 }
 
+// Handle header fade on scroll
+function setupHeaderScroll() {
+    const formPanel = document.querySelector('.panel-form');
+    const navLogo = document.querySelector('.nav-logo');
+    const navTagline = document.querySelector('.nav-tagline');
+
+    if (!formPanel || !navLogo || !navTagline) return;
+
+    formPanel.addEventListener('scroll', () => {
+        const scrollY = formPanel.scrollTop;
+        const fadeStart = 50;  // Start fading at 50px scroll
+        const fadeEnd = 150;   // Fully faded at 150px scroll
+
+        // Calculate opacity (1 at top, 0 after fadeEnd)
+        let opacity = 1 - Math.min(Math.max((scrollY - fadeStart) / (fadeEnd - fadeStart), 0), 1);
+
+        // Calculate font scale (1 at top, smaller after scroll)
+        const minScale = 0.6;
+        let scale = 1 - (1 - minScale) * (1 - opacity);
+
+        navLogo.style.opacity = opacity;
+        navTagline.style.opacity = opacity;
+        navLogo.style.fontSize = `${1.4 * scale}rem`;
+        navTagline.style.fontSize = `${1.3 * scale}rem`;
+    });
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     loadThemes();
     loadGallery();
     setupAutocomplete();
     setupLightbox();
+    setupHeaderScroll();
 
     const form = document.getElementById('poster-form');
     if (form) {

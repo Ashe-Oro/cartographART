@@ -33,6 +33,78 @@
     --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 }
 
+/* Elegant Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--ink);
+    border-left: 1px solid var(--ink-medium);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--ink-medium);
+    border-radius: 0;
+    transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--copper-dark);
+}
+
+::-webkit-scrollbar-thumb:active {
+    background: var(--copper);
+}
+
+::-webkit-scrollbar-corner {
+    background: var(--ink);
+}
+
+/* Firefox scrollbar */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--ink-medium) var(--ink);
+}
+
+/* Panel-specific scrollbar refinement */
+.panel-form::-webkit-scrollbar {
+    width: 6px;
+}
+
+.panel-form::-webkit-scrollbar-track {
+    background: transparent;
+    border-left: none;
+}
+
+.panel-form::-webkit-scrollbar-thumb {
+    background: var(--ink-medium);
+    border-radius: 3px;
+}
+
+.panel-form::-webkit-scrollbar-thumb:hover {
+    background: var(--copper-dark);
+}
+
+/* Autocomplete dropdown scrollbar */
+.autocomplete-results::-webkit-scrollbar {
+    width: 4px;
+}
+
+.autocomplete-results::-webkit-scrollbar-track {
+    background: var(--ink);
+}
+
+.autocomplete-results::-webkit-scrollbar-thumb {
+    background: var(--slate);
+    border-radius: 2px;
+}
+
+.autocomplete-results::-webkit-scrollbar-thumb:hover {
+    background: var(--copper);
+}
+
 /* Reset & Base */
 *, *::before, *::after {
     box-sizing: border-box;
@@ -100,15 +172,17 @@ body {
 
 .nav-logo {
     font-family: var(--font-body);
-    font-size: 0.9rem;
+    font-size: 1.4rem;
     font-weight: 600;
     letter-spacing: 0.2em;
     color: var(--copper);
+    transition: font-size 0.3s var(--ease-out), opacity 0.3s var(--ease-out);
 }
 
 .nav-tagline {
     font-family: var(--font-display);
-    font-size: 1rem;
+    font-size: 1.3rem;
+    transition: font-size 0.3s var(--ease-out), opacity 0.3s var(--ease-out);
     font-style: italic;
     color: var(--cream-dark);
 }
@@ -166,7 +240,7 @@ body {
 
 .subtitle {
     font-family: var(--font-display);
-    font-size: 1.25rem;
+    font-size: 1.5rem;
     font-style: italic;
     color: var(--cream);
     opacity: 0.85;
@@ -1279,7 +1353,7 @@ appkit-button::part(button) {
     padding-top: var(--space-lg);
     border-top: 1px solid var(--ink-medium);
     width: 100%;
-    max-width: 500px;
+    max-width: 620px;
 }
 
 .gallery-header {
@@ -1306,8 +1380,8 @@ appkit-button::part(button) {
 
 .gallery-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 0.75rem;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
     max-width: 100%;
 }
 
