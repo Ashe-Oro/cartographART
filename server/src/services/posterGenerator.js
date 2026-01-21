@@ -1,7 +1,31 @@
 import { spawn } from 'child_process';
 import { join } from 'path';
+import { readFileSync, existsSync } from 'fs';
 import { config } from '../config.js';
 import { updateJob, JobStatus } from './jobManager.js';
+import { addToGallery } from './galleryManager.js';
+
+/**
+ * Load theme information from theme file.
+ * @param {string} themeId - The theme ID
+ * @returns {Object} Theme info (name, bg, text)
+ */
+function loadThemeInfo(themeId) {
+  try {
+    const themeFile = join(config.themesDir, `${themeId}.json`);
+    if (existsSync(themeFile)) {
+      const data = JSON.parse(readFileSync(themeFile, 'utf-8'));
+      return {
+        name: data.name || themeId,
+        bg: data.bg || '#0a0a0a',
+        text: data.text || '#f5f0e8',
+      };
+    }
+  } catch (error) {
+    console.error(`Failed to load theme ${themeId}:`, error);
+  }
+  return { name: themeId, bg: '#0a0a0a', text: '#f5f0e8' };
+}
 
 /**
  * Generate a poster using the Python maptoposter script.
@@ -93,11 +117,19 @@ export async function generatePoster(jobId, request) {
     childProcess.on('close', (code) => {
       if (code === 0) {
         console.log(`[Job ${jobId}] Completed successfully`);
+
+        // Add to gallery BEFORE updating job status (which triggers WebSocket)
+        if (request.showInGallery !== false) {
+          const themeInfo = loadThemeInfo(request.theme || 'feature_based');
+          addToGallery(jobId, request, themeInfo);
+        }
+
         updateJob(jobId, {
           status: JobStatus.COMPLETED,
           progress: 100,
           message: 'Poster generated successfully!',
         });
+
         resolve(outputPath);
       } else {
         console.error(`[Job ${jobId}] Failed with code ${code}: ${stderr}`);

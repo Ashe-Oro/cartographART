@@ -4,10 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cartograph — City Map Posters</title>
+    <link rel="icon" type="image/png" href="/static/img/favicon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/styles.css?v=3">
+    <link rel="stylesheet" href="/static/css/styles.css?v=13">
 </head>
 <body>
     <!-- Grain overlay -->
@@ -15,10 +16,10 @@
 
     <!-- Floating nav -->
     <nav class="floating-nav">
-        <div class="nav-left">
+        <a href="/" class="nav-left">
             <div class="nav-logo">CARTOGRAPH</div>
             <div class="nav-tagline">Bespoke City Prints</div>
-        </div>
+        </a>
         <div class="nav-right">
             <appkit-button></appkit-button>
         </div>
@@ -92,6 +93,12 @@
                         <div class="price-display">
                             <span class="price-label">Cost</span>
                             <span class="price-amount">$0.001 <span class="price-currency">USDC</span></span>
+                        </div>
+                        <div class="privacy-option">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="show-in-gallery" checked>
+                                <span>Show in public gallery</span>
+                            </label>
                         </div>
                         <button type="submit" id="submit-btn" class="btn-generate">
                             <span class="btn-text">Create Artwork</span>
@@ -204,6 +211,13 @@
                     <span class="caption-label">Live Preview</span>
                     <span class="caption-note">Final artwork rendered at 300 DPI</span>
                 </div>
+
+                <!-- Recent Gallery -->
+                <div class="recent-gallery" id="recent-gallery">
+                    <div class="gallery-grid" id="gallery-grid">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
             </div>
 
             <!-- Result Image (shown after generation) -->
@@ -230,6 +244,15 @@
             <p>Powered by x402 on Base</p>
         </div>
     </footer>
+
+    <!-- Lightbox for gallery images -->
+    <div class="lightbox hidden" id="lightbox">
+        <button class="lightbox-close" id="lightbox-close">&times;</button>
+        <div class="lightbox-content">
+            <img id="lightbox-image" src="" alt="Poster preview">
+            <div class="lightbox-caption" id="lightbox-caption"></div>
+        </div>
+    </div>
 
     <script type="module" src="/static/dist/app.bundle.js"></script>
 </body>

@@ -85,6 +85,12 @@ body {
     display: flex;
     align-items: baseline;
     gap: var(--space-sm);
+    text-decoration: none;
+    transition: opacity 0.3s var(--ease-out);
+}
+
+.nav-left:hover {
+    opacity: 0.8;
 }
 
 .nav-right {
@@ -245,8 +251,9 @@ body {
 
 .input-wrapper label {
     position: absolute;
-    left: 0;
-    top: var(--space-md);
+    left: var(--space-sm);
+    top: 50%;
+    transform: translateY(-50%);
     font-family: var(--font-body);
     font-size: 1rem;
     color: var(--cream-dark);
@@ -257,9 +264,12 @@ body {
 .input-wrapper input:focus + label,
 .input-wrapper input:not(:placeholder-shown) + label {
     top: 0;
+    transform: translateY(-50%);
     font-size: 0.8rem;
     color: var(--copper);
     letter-spacing: 0.1em;
+    background: var(--ink-light);
+    padding: 0 0.25rem;
 }
 
 .input-line {
@@ -537,7 +547,12 @@ body {
 }
 
 .preview-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     text-align: center;
+    max-height: 100%;
+    overflow-y: auto;
 }
 
 .preview-frame {
@@ -1202,4 +1217,260 @@ appkit-button::part(button) {
 .wallet-status.connected {
     color: var(--copper);
     border-color: var(--copper);
+}
+
+/* Privacy Checkbox */
+.privacy-option {
+    margin-bottom: var(--space-md);
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--cream-dark);
+    transition: color 0.3s var(--ease-out);
+}
+
+.checkbox-label:hover {
+    color: var(--cream);
+}
+
+.checkbox-label input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border: 1px solid var(--slate);
+    border-radius: 3px;
+    background: var(--ink);
+    cursor: pointer;
+    position: relative;
+    transition: all 0.3s var(--ease-out);
+}
+
+.checkbox-label input[type="checkbox"]:checked {
+    background: var(--copper);
+    border-color: var(--copper);
+}
+
+.checkbox-label input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 2px;
+    width: 5px;
+    height: 9px;
+    border: solid var(--ink);
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.checkbox-label input[type="checkbox"]:focus {
+    outline: none;
+    border-color: var(--copper);
+}
+
+/* Recent Gallery */
+.recent-gallery {
+    margin-top: var(--space-xl);
+    padding-top: var(--space-lg);
+    border-top: 1px solid var(--ink-medium);
+    width: 100%;
+    max-width: 500px;
+}
+
+.gallery-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+}
+
+.gallery-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--copper);
+}
+
+.gallery-note {
+    font-size: 0.9rem;
+    color: var(--cream-dark);
+    font-style: italic;
+}
+
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 0.75rem;
+    max-width: 100%;
+}
+
+.gallery-item {
+    position: relative;
+    aspect-ratio: 3/4;
+    border-radius: 3px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.3s var(--ease-out);
+    border: 1px solid var(--ink-medium);
+    background: var(--ink-medium);
+}
+
+.gallery-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px -8px rgba(0,0,0,0.4);
+    border-color: var(--copper);
+}
+
+.gallery-item-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s var(--ease-out);
+}
+
+.gallery-item:hover .gallery-item-img {
+    transform: scale(1.05);
+}
+
+.gallery-item-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 0.5rem 0.25rem 0.25rem;
+    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.3s var(--ease-out);
+}
+
+.gallery-item:hover .gallery-item-overlay {
+    opacity: 1;
+}
+
+.gallery-item-city {
+    font-family: var(--font-body);
+    font-size: 0.55rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--cream);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.gallery-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: var(--space-md);
+    color: var(--cream-dark);
+    font-style: italic;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 600px) {
+    .gallery-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* Lightbox */
+.lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    background: rgba(0, 0, 0, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-lg);
+    animation: fadeIn 0.3s var(--ease-out);
+}
+
+.lightbox.hidden {
+    display: none;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.lightbox-close {
+    position: absolute;
+    top: var(--space-md);
+    right: var(--space-md);
+    background: none;
+    border: none;
+    color: var(--cream);
+    font-size: 2.5rem;
+    cursor: pointer;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s var(--ease-out);
+    opacity: 0.7;
+}
+
+.lightbox-close:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.lightbox-content {
+    max-width: 90vw;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: scaleIn 0.3s var(--ease-out);
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.lightbox-content img {
+    max-width: 100%;
+    max-height: 80vh;
+    border-radius: 4px;
+    box-shadow: 0 20px 60px -15px rgba(0, 0, 0, 0.5);
+}
+
+.lightbox-caption {
+    margin-top: var(--space-md);
+    text-align: center;
+    color: var(--cream);
+}
+
+.lightbox-caption .caption-city {
+    font-family: var(--font-body);
+    font-size: 1.1rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.lightbox-caption .caption-theme {
+    font-size: 0.9rem;
+    color: var(--copper);
+    font-style: italic;
 }

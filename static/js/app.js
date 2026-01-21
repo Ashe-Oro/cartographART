@@ -29,6 +29,104 @@ const statusTitles = [
     "Inking the Roads"
 ];
 
+// Load gallery on page load
+async function loadGallery() {
+    try {
+        const response = await fetch(`${API_BASE}/api/gallery?limit=12`);
+        const data = await response.json();
+        renderGallery(data.posters);
+    } catch (error) {
+        console.error('Failed to load gallery:', error);
+    }
+}
+
+// Render gallery items
+function renderGallery(posters) {
+    const grid = document.getElementById('gallery-grid');
+    if (!grid) return;
+
+    if (!posters || posters.length === 0) {
+        grid.innerHTML = '<div class="gallery-empty">No community artwork yet. Be the first!</div>';
+        return;
+    }
+
+    grid.innerHTML = posters.map(poster => `
+        <div class="gallery-item"
+             data-job-id="${poster.jobId}"
+             data-city="${poster.city}"
+             data-country="${poster.country}"
+             data-theme="${poster.themeName}"
+             title="${poster.city}, ${poster.country}">
+            <img class="gallery-item-img"
+                 src="${API_BASE}/api/gallery/image/${poster.jobId}"
+                 alt="${poster.city}, ${poster.country}"
+                 loading="lazy">
+            <div class="gallery-item-overlay">
+                <div class="gallery-item-city">${poster.city}</div>
+            </div>
+        </div>
+    `).join('');
+
+    // Add click handlers for lightbox
+    grid.querySelectorAll('.gallery-item').forEach(item => {
+        item.addEventListener('click', () => openLightbox(item));
+    });
+}
+
+// Open lightbox with poster
+function openLightbox(item) {
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImage = document.getElementById('lightbox-image');
+    const lightboxCaption = document.getElementById('lightbox-caption');
+
+    const jobId = item.dataset.jobId;
+    const city = item.dataset.city;
+    const country = item.dataset.country;
+    const theme = item.dataset.theme;
+
+    lightboxImage.src = `${API_BASE}/api/gallery/image/${jobId}`;
+    lightboxCaption.innerHTML = `
+        <div class="caption-city">${city}, ${country}</div>
+        <div class="caption-theme">${theme}</div>
+    `;
+
+    lightbox.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+// Close lightbox
+function closeLightbox() {
+    const lightbox = document.getElementById('lightbox');
+    lightbox.classList.add('hidden');
+    document.body.style.overflow = '';
+}
+
+// Setup lightbox event listeners
+function setupLightbox() {
+    const lightbox = document.getElementById('lightbox');
+    const closeBtn = document.getElementById('lightbox-close');
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeLightbox);
+    }
+
+    if (lightbox) {
+        // Close on background click
+        lightbox.addEventListener('click', (e) => {
+            if (e.target === lightbox) {
+                closeLightbox();
+            }
+        });
+
+        // Close on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !lightbox.classList.contains('hidden')) {
+                closeLightbox();
+            }
+        });
+    }
+}
+
 // Load themes on page load
 async function loadThemes() {
     try {
@@ -339,12 +437,14 @@ async function handleSubmit(event) {
 
     const formData = new FormData(event.target);
     const state = formData.get('state')?.trim();
+    const showInGallery = document.getElementById('show-in-gallery')?.checked !== false;
     const request = {
         city: city,
         state: state || null,
         country: country,
         theme: formData.get('theme'),
-        size: formData.get('size')
+        size: formData.get('size'),
+        showInGallery: showInGallery
     };
 
     // Store for re-theming
@@ -602,6 +702,9 @@ function showResult(job) {
     document.querySelectorAll('#retheme-gallery .theme-card').forEach(card => {
         card.classList.toggle('selected', card.dataset.themeId === currentThemeId);
     });
+
+    // Refresh gallery after completion
+    loadGallery();
 }
 
 // Reset to create another poster
@@ -652,7 +755,9 @@ function resetForm() {
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     loadThemes();
+    loadGallery();
     setupAutocomplete();
+    setupLightbox();
 
     const form = document.getElementById('poster-form');
     if (form) {

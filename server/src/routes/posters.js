@@ -17,7 +17,7 @@ const VALID_SIZES = ['auto', 'neighborhood', 'small', 'town', 'city', 'metro', '
  */
 postersRouter.post('/posters', async (req, res) => {
   try {
-    const { city, state, country, theme, size, distance } = req.body;
+    const { city, state, country, theme, size, distance, showInGallery } = req.body;
 
     // Validate required fields
     if (!city || city.length < 1 || city.length > 100) {
@@ -57,6 +57,7 @@ postersRouter.post('/posters', async (req, res) => {
       theme: theme || 'feature_based',
       size: posterSize,
       distance: distance || null,
+      showInGallery: showInGallery !== false, // Default to true
     };
 
     const jobId = createJob(request);

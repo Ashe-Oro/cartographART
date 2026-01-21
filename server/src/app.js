@@ -13,6 +13,7 @@ import { setupX402Middleware } from './middleware/x402.js';
 import { themesRouter } from './routes/themes.js';
 import { jobsRouter } from './routes/jobs.js';
 import { postersRouter } from './routes/posters.js';
+import { galleryRouter } from './routes/gallery.js';
 import { setupWebSocket } from './routes/websocket.js';
 import { config } from './config.js';
 
@@ -46,9 +47,10 @@ export function createApp(options = {}) {
     res.json({ status: 'ok' });
   });
 
-  // API routes (themes and jobs don't require payment)
+  // API routes (themes, jobs, and gallery don't require payment)
   app.use('/api', themesRouter);
   app.use('/api', jobsRouter);
+  app.use('/api', galleryRouter);
 
   // x402 protected routes
   setupX402Middleware(app);
