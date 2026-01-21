@@ -1,3 +1,5 @@
+import { fetchWithPayment, isConnected, openModal, getAddress } from './wallet.js';
+
 const API_BASE = '';
 const PHOTON_API = 'https://photon.komoot.io/api';
 let currentJobId = null;
@@ -289,6 +291,22 @@ function setupAutocomplete() {
     });
 }
 
+// Update wallet status display
+function updateWalletStatus() {
+    const statusElement = document.querySelector('.wallet-status');
+    if (!statusElement) return;
+
+    if (isConnected()) {
+        const address = getAddress();
+        const shortAddress = address ? `${address.slice(0, 6)}...${address.slice(-4)}` : '';
+        statusElement.textContent = shortAddress;
+        statusElement.classList.add('connected');
+    } else {
+        statusElement.textContent = 'Connect Wallet';
+        statusElement.classList.remove('connected');
+    }
+}
+
 // Form submission
 async function handleSubmit(event) {
     event.preventDefault();
@@ -301,6 +319,22 @@ async function handleSubmit(event) {
         alert('Please select a location from the suggestions');
         document.getElementById('location-search').focus();
         return;
+    }
+
+    // Check wallet connection - prompt to connect if not connected
+    if (!isConnected()) {
+        const shouldConnect = confirm('Wallet not connected. This poster costs $0.001 USDC. Connect wallet to proceed?');
+        if (shouldConnect) {
+            await openModal();
+            // Wait a moment for connection
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            if (!isConnected()) {
+                alert('Please connect your wallet to continue');
+                return;
+            }
+        } else {
+            return;
+        }
     }
 
     const formData = new FormData(event.target);
@@ -354,14 +388,14 @@ async function submitPosterRequest(request, hideSection) {
         // Show status section
         document.getElementById(hideSection).classList.add('hidden');
         document.getElementById('status').classList.remove('hidden');
-        document.getElementById('status-text').textContent = 'Initializing cartographic engine...';
+        document.getElementById('status-text').textContent = 'Initializing payment...';
         document.getElementById('progress').style.width = '0%';
 
         // Start rotating titles
         startTitleRotation();
 
-        // Submit request
-        const response = await fetch(`${API_BASE}/api/posters`, {
+        // Submit request with payment handling (fetchWithPayment handles 402 automatically)
+        const response = await fetchWithPayment(`${API_BASE}/api/posters`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(request)
@@ -375,7 +409,7 @@ async function submitPosterRequest(request, hideSection) {
         const result = await response.json();
         currentJobId = result.job_id;
 
-        document.getElementById('status-text').textContent = 'Connecting to server...';
+        document.getElementById('status-text').textContent = 'Payment confirmed! Connecting to server...';
         startTime = Date.now();
 
         // Connect WebSocket for real-time updates
@@ -383,6 +417,7 @@ async function submitPosterRequest(request, hideSection) {
 
     } catch (error) {
         console.error('Request failed:', error);
+        stopTitleRotation();
         document.getElementById('status-text').textContent = `Error: ${error.message}`;
 
         // Show previous section again after delay
@@ -403,6 +438,21 @@ async function applyNewTheme() {
     if (!lastRequest) {
         alert('No previous request found');
         return;
+    }
+
+    // Check wallet connection for re-theming (also requires payment)
+    if (!isConnected()) {
+        const shouldConnect = confirm('Wallet not connected. Re-theming costs $0.001 USDC. Connect wallet to proceed?');
+        if (shouldConnect) {
+            await openModal();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            if (!isConnected()) {
+                alert('Please connect your wallet to continue');
+                return;
+            }
+        } else {
+            return;
+        }
     }
 
     // Create new request with different theme
@@ -618,4 +668,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (applyBtn) {
         applyBtn.addEventListener('click', applyNewTheme);
     }
+
+    // Update wallet status periodically
+    setInterval(updateWalletStatus, 2000);
 });

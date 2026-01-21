@@ -30,3 +30,7 @@ Thumbs.db
 
 # Local files
 feedback/
+
+# Node.js
+node_modules/
+static/dist/

@@ -74,10 +74,22 @@ body {
     position: fixed;
     top: var(--space-md);
     left: var(--space-md);
+    right: var(--space-md);
     z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.nav-left {
     display: flex;
     align-items: baseline;
     gap: var(--space-sm);
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
 }
 
 .nav-logo {
@@ -1152,4 +1164,42 @@ body {
 
 .preview-frame {
     animation: fadeInUp 1s var(--ease-out) 0.5s both;
+}
+
+/* AppKit Wallet Button Overrides */
+appkit-button {
+    --wui-color-accent-100: var(--copper);
+    --wui-color-accent-090: var(--copper-light);
+    --wui-color-accent-080: var(--copper-dark);
+}
+
+appkit-button::part(button) {
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    border-radius: 4px;
+    transition: all 0.3s var(--ease-out);
+}
+
+/* Wallet status indicator (custom) */
+.wallet-status {
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    color: var(--cream-dark);
+    padding: var(--space-xs) var(--space-sm);
+    border: 1px solid var(--ink-medium);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s var(--ease-out);
+}
+
+.wallet-status:hover {
+    border-color: var(--copper);
+    color: var(--copper);
+}
+
+.wallet-status.connected {
+    color: var(--copper);
+    border-color: var(--copper);
 }

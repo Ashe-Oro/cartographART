@@ -1,5 +1,6 @@
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from fastapi.responses import FileResponse
+from fastapi_x402 import pay
 from ..config import settings
 from ..services.job_manager import create_job, get_job
 from ..services.poster_generator import generate_poster_task
@@ -8,12 +9,13 @@ from ..models import PosterRequest, JobResponse, JobStatus
 router = APIRouter(prefix="/api", tags=["posters"])
 
 
+@pay(f"${settings.poster_price}")
 @router.post("/posters", response_model=JobResponse)
 async def create_poster(request: PosterRequest, background_tasks: BackgroundTasks):
     """
     Create a new poster generation job.
 
-    In production, this endpoint will be protected by x402 payment ($0.75 USDC).
+    Requires $0.75 USDC payment via x402 protocol.
     Generation takes 30-60 seconds. Poll /api/jobs/{job_id} for status.
     """
     # Validate theme exists

@@ -15,8 +15,13 @@
 
     <!-- Floating nav -->
     <nav class="floating-nav">
-        <div class="nav-logo">CARTOGRAPH</div>
-        <div class="nav-tagline">Bespoke City Prints</div>
+        <div class="nav-left">
+            <div class="nav-logo">CARTOGRAPH</div>
+            <div class="nav-tagline">Bespoke City Prints</div>
+        </div>
+        <div class="nav-right">
+            <appkit-button></appkit-button>
+        </div>
     </nav>
 
     <main class="app-container">
@@ -85,9 +90,8 @@
 
                     <div class="form-footer">
                         <div class="price-display">
-                            <span class="price-label">Investment</span>
-                            <span class="price-amount">$0.75 <span class="price-currency">USDC</span></span>
-                            <span class="price-note">Demo mode — complimentary</span>
+                            <span class="price-label">Cost</span>
+                            <span class="price-amount">$0.001 <span class="price-currency">USDC</span></span>
                         </div>
                         <button type="submit" id="submit-btn" class="btn-generate">
                             <span class="btn-text">Create Artwork</span>
@@ -227,6 +231,6 @@
         </div>
     </footer>
 
-    <script src="/static/js/app.js"></script>
+    <script type="module" src="/static/dist/app.bundle.js"></script>
 </body>
 </html>
