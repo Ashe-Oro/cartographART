@@ -1,8 +1,5 @@
 import { Router } from 'express';
-import { existsSync } from 'fs';
-import { join } from 'path';
-import { getRecentPosters, loadGallery } from '../services/galleryManager.js';
-import { config } from '../config.js';
+import { getRecentPosters, getPosterPath } from '../services/galleryManager.js';
 
 export const galleryRouter = Router();
 
@@ -24,21 +21,15 @@ galleryRouter.get('/gallery', (req, res) => {
 
 /**
  * GET /api/gallery/image/:jobId
- * Serve a gallery poster image directly (no job data required).
+ * Serve a gallery poster image directly (supports both user-generated and bundled posters).
  */
 galleryRouter.get('/gallery/image/:jobId', (req, res) => {
   const { jobId } = req.params;
 
-  // Verify the job is in the gallery
-  const entries = loadGallery();
-  const entry = entries.find(e => e.jobId === jobId);
+  // Find poster file (checks data dir and bundled posters)
+  const filePath = getPosterPath(jobId);
 
-  if (!entry) {
-    return res.status(404).json({ detail: 'Poster not found in gallery' });
-  }
-
-  const filePath = join(config.dataDir, `${jobId}.png`);
-  if (!existsSync(filePath)) {
+  if (!filePath) {
     return res.status(404).json({ detail: 'Poster file not found' });
   }
 
