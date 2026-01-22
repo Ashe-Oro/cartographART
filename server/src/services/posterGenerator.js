@@ -69,7 +69,12 @@ export async function generatePoster(jobId, request) {
 
     const childProcess = spawn('python3', args, {
       cwd: config.maptoposterDir,
-      env: { ...process.env, PYTHONUNBUFFERED: '1' },
+      env: {
+        ...process.env,
+        PYTHONUNBUFFERED: '1',
+        // Disable tqdm progress bars to get cleaner error output
+        TQDM_DISABLE: '1',
+      },
     });
 
     let stderr = '';
@@ -110,8 +115,12 @@ export async function generatePoster(jobId, request) {
     });
 
     childProcess.stderr.on('data', (data) => {
-      stderr += data.toString();
-      console.error(`[Job ${jobId}] stderr: ${data.toString().trim()}`);
+      const text = data.toString();
+      stderr += text;
+      // Filter out tqdm progress bar noise (contains \r or |)
+      if (!text.includes('\r') && !text.includes('|')) {
+        console.error(`[Job ${jobId}] stderr: ${text.trim()}`);
+      }
     });
 
     childProcess.on('close', (code) => {
@@ -132,12 +141,20 @@ export async function generatePoster(jobId, request) {
 
         resolve(outputPath);
       } else {
-        console.error(`[Job ${jobId}] Failed with code ${code}: ${stderr}`);
+        // Clean up stderr - remove tqdm progress bars and extract actual error
+        const cleanedStderr = stderr
+          .split('\n')
+          .filter(line => !line.includes('\r') && !line.includes('|') && line.trim())
+          .join('\n')
+          .trim();
+
+        const errorMsg = cleanedStderr || `Python process exited with code ${code}`;
+        console.error(`[Job ${jobId}] Failed with code ${code}: ${errorMsg}`);
         updateJob(jobId, {
           status: JobStatus.FAILED,
-          error: stderr || `Process exited with code ${code}`,
+          error: errorMsg,
         });
-        reject(new Error(stderr || `Process exited with code ${code}`));
+        reject(new Error(errorMsg));
       }
     });
 
