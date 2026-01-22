@@ -342,7 +342,9 @@ CDP_WALLET_SECRET=your_wallet_secret
 
 ## License
 
-MIT License. See [LICENSE](LICENSE) for details.
+This project is licensed under [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) (Creative Commons Attribution-NonCommercial 4.0 International).
+
+You are free to share and adapt this work for non-commercial purposes with attribution. See [LICENSE](LICENSE) for details.
 
 ---
 
