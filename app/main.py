@@ -13,6 +13,13 @@ from .services.job_manager import set_notify_callback
 from .services.websocket_manager import notify_job_update
 from .config import settings
 
+# Debug: Log settings at module load
+print("=== x402 Configuration ===")
+print(f"pay_to_address: {settings.pay_to_address}")
+print(f"x402_network: {settings.x402_network}")
+print(f"facilitator_url: {settings.facilitator_url}")
+print("==========================")
+
 
 class APIOnlyPaymentMiddleware(BaseHTTPMiddleware):
     """Wrapper that only applies PaymentMiddleware to /api routes."""
