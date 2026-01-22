@@ -1139,11 +1139,11 @@ body {
     font-size: 1rem;
 }
 
-/* Footer */
+/* Footer - centered in right pane */
 .site-footer {
     position: fixed;
     bottom: 0;
-    left: 0;
+    left: 500px; /* Match sidebar max-width */
     right: 0;
     z-index: 50;
     padding: var(--space-sm) var(--space-md);
@@ -1194,6 +1194,10 @@ body {
 
     .form-header h1 {
         font-size: 3rem;
+    }
+
+    .site-footer {
+        left: 0; /* Full width on mobile/tablet */
     }
 }
 
