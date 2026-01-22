@@ -1,8 +1,9 @@
-#!/bin/bash
-set -e
+#!/usr/bin/env python3
+import os
+import sys
 
-# Default to port 8000 if PORT not set
-PORT="${PORT:-8000}"
+port = os.environ.get("PORT", "8000")
+print(f"Starting server on port {port}")
 
-echo "Starting server on port $PORT"
-exec uvicorn app.main:app --host 0.0.0.0 --port "$PORT"
+# Use exec to replace this process with uvicorn
+os.execvp("uvicorn", ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", port])
