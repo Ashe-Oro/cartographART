@@ -873,7 +873,14 @@ body {
 .status-message {
     font-size: 1.1rem;
     color: var(--cream-dark);
+    margin-bottom: var(--space-sm);
+}
+
+.status-note {
+    font-size: 0.85rem;
+    color: var(--slate);
     margin-bottom: var(--space-lg);
+    font-style: italic;
 }
 
 .progress-container {
