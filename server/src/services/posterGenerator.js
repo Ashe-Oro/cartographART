@@ -84,17 +84,17 @@ export async function generatePoster(jobId, request) {
     let stderr = '';
     let killed = false;
 
-    // 5 minute timeout
+    // 10 minute timeout
     const timeout = setTimeout(() => {
       killed = true;
       childProcess.kill('SIGTERM');
-      console.error(`[Job ${jobId}] Killed due to timeout (5 minutes)`);
+      console.error(`[Job ${jobId}] Killed due to timeout (10 minutes)`);
       updateJob(jobId, {
         status: JobStatus.FAILED,
-        error: 'Generation timed out after 5 minutes',
+        error: 'Generation timed out after 10 minutes',
       });
-      reject(new Error('Generation timed out after 5 minutes'));
-    }, 5 * 60 * 1000);
+      reject(new Error('Generation timed out after 10 minutes'));
+    }, 10 * 60 * 1000);
 
     childProcess.stdout.on('data', (data) => {
       const output = data.toString().trim();
