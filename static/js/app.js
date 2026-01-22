@@ -89,7 +89,7 @@ function renderGallery(posters) {
              data-theme="${poster.themeName}"
              title="${poster.city}, ${poster.country}">
             <img class="gallery-item-img"
-                 src="${API_BASE}/api/gallery/image/${poster.jobId}"
+                 src="${API_BASE}/api/gallery/thumbnail/${poster.jobId}"
                  alt="${poster.city}, ${poster.country}"
                  loading="lazy">
             <div class="gallery-item-overlay">
