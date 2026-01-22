@@ -1,0 +1,37 @@
+# Environment files (use Railway env vars instead)
+.env
+.env.*
+!.env.example
+
+# Git
+.git
+.gitignore
+
+# Node modules (will be installed fresh)
+node_modules
+server/node_modules
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+.venv
+venv
+
+# IDE
+.idea
+.vscode
+
+# Build artifacts
+dist
+*.log
+
+# Local data
+data/
+server/data/
+feedback/
+
+# Documentation
+*.md
+!README.md
