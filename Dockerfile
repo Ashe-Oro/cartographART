@@ -1,5 +1,8 @@
 FROM python:3.11-slim
 
+# Cache buster - change this value to force a full rebuild
+ARG CACHE_BUST=2
+
 # Install system dependencies for geopandas, osmnx, matplotlib
 RUN apt-get update && apt-get install -y \
     libgdal-dev \
