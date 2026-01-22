@@ -25,7 +25,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/static/css/styles.css?v=28">
+    <link rel="stylesheet" href="/static/css/styles.css?v=33">
 </head>
 <body>
     <!-- Grain overlay -->
@@ -35,7 +35,6 @@
     <nav class="floating-nav">
         <a href="/" class="nav-left">
             <div class="nav-logo">CARTOGRAPH</div>
-            <div class="nav-tagline">Bespoke City Prints</div>
         </a>
         <div class="nav-right">
             <appkit-button></appkit-button>
@@ -217,19 +216,24 @@
                     <span class="caption-note">Final artwork rendered at 300 DPI</span>
                 </div>
 
-                <!-- Recent Gallery -->
-                <div class="recent-gallery" id="recent-gallery">
-                    <div class="gallery-header">
-                        <span class="gallery-label">Community Gallery</span>
-                    </div>
-                    <div class="gallery-grid" id="gallery-grid">
-                        <!-- Populated by JS -->
-                    </div>
+            </div>
+
+            <!-- Recent Gallery (outside preview-content so it shows on mobile) -->
+            <div class="recent-gallery" id="recent-gallery">
+                <div class="gallery-header">
+                    <span class="gallery-label">Community Gallery</span>
+                </div>
+                <div class="gallery-grid" id="gallery-grid">
+                    <!-- Populated by JS -->
                 </div>
             </div>
 
             <!-- Result Image (shown after generation) -->
             <div class="result-display hidden" id="result-display">
+                <div class="result-header">
+                    <span class="overline">Your Artwork</span>
+                    <h2 class="result-title">Complete</h2>
+                </div>
                 <div class="result-frame-large">
                     <img id="result-image" alt="Generated poster">
                 </div>
@@ -244,9 +248,15 @@
                         </svg>
                         Download Image
                     </a>
-                    <button id="new-poster-btn" class="btn-new">
-                        Create Another
-                    </button>
+                </div>
+            </div>
+
+            <!-- Retheme Section (shown after generation) -->
+            <div class="retheme-container hidden" id="retheme-container">
+                <div class="retheme-section">
+                    <h3>Try a Different Theme</h3>
+                    <div id="retheme-gallery-mobile" class="theme-gallery retheme-gallery"></div>
+                    <button id="apply-theme-btn-mobile" class="btn-retheme">Apply Theme</button>
                 </div>
             </div>
 

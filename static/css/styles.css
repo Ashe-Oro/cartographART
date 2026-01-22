@@ -613,8 +613,9 @@ body {
 /* Preview Panel */
 .panel-preview {
     display: flex;
-    align-items: flex-start;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
     padding: var(--space-xl);
     position: relative;
     min-height: 100vh;
@@ -629,6 +630,7 @@ body {
     flex-direction: column;
     align-items: center;
     text-align: center;
+    order: 0; /* Display first (live preview on desktop) */
 }
 
 .preview-frame {
@@ -960,6 +962,32 @@ body {
     align-items: center;
     justify-content: center;
     text-align: center;
+    order: 1; /* Display above gallery */
+}
+
+.result-header {
+    margin-bottom: var(--space-lg);
+    text-align: center;
+}
+
+.result-header .overline {
+    margin-bottom: var(--space-xs);
+}
+
+.result-header .result-title {
+    margin-bottom: 0;
+}
+
+/* Retheme Container in Right Panel */
+.retheme-container {
+    width: 100%;
+    max-width: 500px;
+    order: 2; /* Between result and gallery */
+    margin-top: var(--space-lg);
+}
+
+.retheme-container.hidden {
+    display: none !important;
 }
 
 .result-frame-large {
@@ -1184,12 +1212,15 @@ body {
     }
 
     .panel-preview {
+        display: flex;
+        flex-direction: column;
         min-height: auto;
         padding: var(--space-lg);
         order: 2; /* Show below form */
     }
 
     .panel-form {
+        position: static; /* Remove sticky positioning on mobile */
         border-right: none;
         max-height: none;
         height: auto;
@@ -1199,6 +1230,11 @@ body {
 
     .preview-content {
         display: none; /* Hide live preview on mobile */
+    }
+
+    /* Hide left panel result section on mobile - content is duplicated in right panel */
+    #result {
+        display: none !important;
     }
 
     .result-display {
@@ -1404,6 +1440,7 @@ appkit-button::part(button) {
     border-top: 1px solid var(--ink-medium);
     width: 100%;
     max-width: 1000px;
+    order: 3; /* Display below result */
 }
 
 .gallery-header {

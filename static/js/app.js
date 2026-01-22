@@ -166,6 +166,7 @@ async function loadThemes() {
 
         const gallery = document.getElementById('theme-gallery');
         const rethemeGallery = document.getElementById('retheme-gallery');
+        const rethemeGalleryMobile = document.getElementById('retheme-gallery-mobile');
 
         // Mini map SVG for theme previews
         const miniMapSvg = `
@@ -207,7 +208,7 @@ async function loadThemes() {
 
             gallery.appendChild(card);
 
-            // Retheme gallery (on result page)
+            // Retheme gallery (on result page - desktop)
             const rethemeCard = document.createElement('div');
             rethemeCard.className = 'theme-card';
             rethemeCard.dataset.themeId = theme.id;
@@ -221,6 +222,20 @@ async function loadThemes() {
             rethemeCard.title = theme.description || theme.name;
             rethemeGallery.appendChild(rethemeCard);
 
+            // Retheme gallery (on result page - mobile)
+            const rethemeCardMobile = document.createElement('div');
+            rethemeCardMobile.className = 'theme-card';
+            rethemeCardMobile.dataset.themeId = theme.id;
+            rethemeCardMobile.innerHTML = `
+                <div class="theme-preview" style="background: ${theme.bg}; color: ${theme.text}">
+                    ${miniMapSvg}
+                    <span class="theme-name">${theme.name}</span>
+                </div>
+            `;
+            rethemeCardMobile.onclick = () => selectRetheme(theme.id, rethemeCardMobile);
+            rethemeCardMobile.title = theme.description || theme.name;
+            rethemeGalleryMobile.appendChild(rethemeCardMobile);
+
             // Set initial theme
             if (theme.id === 'feature_based') {
                 currentTheme = theme;
@@ -232,10 +247,12 @@ async function loadThemes() {
     }
 }
 
-// Select theme in retheme gallery
+// Select theme in retheme gallery (syncs both desktop and mobile)
 function selectRetheme(themeId, card) {
-    document.querySelectorAll('#retheme-gallery .theme-card').forEach(c => c.classList.remove('selected'));
-    card.classList.add('selected');
+    // Update both galleries
+    document.querySelectorAll('#retheme-gallery .theme-card, #retheme-gallery-mobile .theme-card').forEach(c => {
+        c.classList.toggle('selected', c.dataset.themeId === themeId);
+    });
     selectedRetheme = themeId;
 }
 
@@ -761,6 +778,7 @@ function showResult(job) {
     // Switch right panel from preview to result display
     document.getElementById('preview-content').classList.add('hidden');
     document.getElementById('result-display').classList.remove('hidden');
+    document.getElementById('retheme-container').classList.remove('hidden');
 
     const imageUrl = `${API_BASE}/api/posters/${job.job_id}`;
     document.getElementById('result-image').src = imageUrl;
@@ -782,10 +800,10 @@ function showResult(job) {
         document.body.style.overflow = 'hidden';
     };
 
-    // Highlight current theme in retheme gallery
+    // Highlight current theme in retheme galleries (both desktop and mobile)
     const currentThemeId = lastRequest?.theme || 'feature_based';
     selectedRetheme = null;
-    document.querySelectorAll('#retheme-gallery .theme-card').forEach(card => {
+    document.querySelectorAll('#retheme-gallery .theme-card, #retheme-gallery-mobile .theme-card').forEach(card => {
         card.classList.toggle('selected', card.dataset.themeId === currentThemeId);
     });
 
@@ -806,6 +824,7 @@ function resetForm() {
 
     // Switch right panel back to preview
     document.getElementById('result-display').classList.add('hidden');
+    document.getElementById('retheme-container').classList.add('hidden');
     document.getElementById('preview-content').classList.remove('hidden');
 
     // Reset status visual
@@ -886,6 +905,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const applyBtn = document.getElementById('apply-theme-btn');
     if (applyBtn) {
         applyBtn.addEventListener('click', applyNewTheme);
+    }
+
+    const applyBtnMobile = document.getElementById('apply-theme-btn-mobile');
+    if (applyBtnMobile) {
+        applyBtnMobile.addEventListener('click', applyNewTheme);
     }
 
     // Update wallet status periodically
