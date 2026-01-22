@@ -1,146 +1,223 @@
-# City Map Poster Generator
+# Cartograph
 
-Generate beautiful, minimalist map posters for any city in the world.
+**Transform any location into museum-quality cartographic art.**
 
-<img src="posters/singapore_neon_cyberpunk_20260108_184503.png" width="250">
-<img src="posters/dubai_midnight_blue_20260108_174920.png" width="250">
+A web application that generates beautiful, minimalist map posters for any city in the world. Powered by OpenStreetMap data and secured with [x402](https://x402.org) micropayments on Base.
 
-## Examples
+<p align="center">
+  <img src="posters/san_francisco_sunset_20260108_184122.png" width="200">
+  <img src="posters/venice_blueprint_20260108_165527.png" width="200">
+  <img src="posters/tokyo_japanese_ink_20260108_165830.png" width="200">
+  <img src="posters/singapore_neon_cyberpunk_20260108_184503.png" width="200">
+</p>
 
+<p align="center">
+  <a href="https://cartograph.art">Live Demo</a> ·
+  <a href="#themes">17 Themes</a> ·
+  <a href="#api-reference">API Docs</a>
+</p>
 
-| Country      | City           | Theme           | Poster |
-|:------------:|:--------------:|:---------------:|:------:|
-| USA          | San Francisco  | sunset          | <img src="posters/san_francisco_sunset_20260108_184122.png" width="250"> |
-| Spain        | Barcelona      | warm_beige      | <img src="posters/barcelona_warm_beige_20260108_172924.png" width="250"> |
-| Italy        | Venice         | blueprint       | <img src="posters/venice_blueprint_20260108_165527.png" width="250"> |
-| Japan        | Tokyo          | japanese_ink    | <img src="posters/tokyo_japanese_ink_20260108_165830.png" width="250"> |
-| India        | Mumbai         | contrast_zones  | <img src="posters/mumbai_contrast_zones_20260108_170325.png" width="250"> |
-| Morocco      | Marrakech      | terracotta      | <img src="posters/marrakech_terracotta_20260108_180821.png" width="250"> |
-| Singapore    | Singapore      | neon_cyberpunk  | <img src="posters/singapore_neon_cyberpunk_20260108_184503.png" width="250"> |
-| Australia    | Melbourne      | forest          | <img src="posters/melbourne_forest_20260108_181459.png" width="250"> |
-| UAE          | Dubai          | midnight_blue   | <img src="posters/dubai_midnight_blue_20260108_174920.png" width="250"> |
+---
 
-## Installation
+## Features
+
+- **Any City, Anywhere** — Search for any location worldwide using Photon geocoding
+- **17 Curated Themes** — From minimalist Japanese ink to vibrant neon cyberpunk
+- **Smart Sizing** — Auto-detects optimal map radius based on city importance
+- **High Resolution** — 300 DPI output ready for printing
+- **Crypto Payments** — $0.10 USDC via x402 protocol on Base
+- **Real-time Progress** — WebSocket updates during generation
+- **Community Gallery** — Browse and get inspired by others' creations
+
+## Gallery
+
+| City | Theme | Preview |
+|:----:|:-----:|:-------:|
+| San Francisco | Sunset | <img src="posters/san_francisco_sunset_20260108_184122.png" width="180"> |
+| Barcelona | Warm Beige | <img src="posters/barcelona_warm_beige_20260108_172924.png" width="180"> |
+| Venice | Blueprint | <img src="posters/venice_blueprint_20260108_165527.png" width="180"> |
+| Tokyo | Japanese Ink | <img src="posters/tokyo_japanese_ink_20260108_165830.png" width="180"> |
+| Singapore | Neon Cyberpunk | <img src="posters/singapore_neon_cyberpunk_20260108_184503.png" width="180"> |
+| Dubai | Midnight Blue | <img src="posters/dubai_midnight_blue_20260108_174920.png" width="180"> |
+
+## How It Works
+
+1. **Search** — Enter any city name and select from autocomplete suggestions
+2. **Customize** — Choose a theme and map scale
+3. **Pay** — Connect your wallet and pay $0.10 USDC
+4. **Generate** — Watch real-time progress as your poster is rendered
+5. **Download** — Get your high-resolution PNG ready for printing
+
+## Tech Stack
+
+- **Frontend**: Vanilla JS, Vite, Web3Modal/Reown AppKit
+- **Backend**: Node.js, Express, WebSocket
+- **Payments**: [x402 Protocol](https://x402.org) with Coinbase CDP
+- **Map Generation**: Python, OSMnx, Matplotlib
+- **Data**: OpenStreetMap via Overpass API
+- **Geocoding**: Photon (Komoot)
+
+---
+
+## Local Development
+
+### Prerequisites
+
+- Node.js 22+
+- Python 3.11+
+- A wallet with USDC on Base (for testing payments)
+
+### Installation
 
 ```bash
+# Clone the repository
+git clone https://github.com/Ashe-Oro/cartographART.git
+cd cartographART
+
+# Install Python dependencies
 pip install -r requirements.txt
+
+# Install Node.js dependencies
+cd server && npm install && cd ..
+
+# Install frontend dependencies (optional, for rebuilding)
+npm install
 ```
 
-## Usage
+### Environment Variables
+
+Create a `.env` file in the project root:
+
+```env
+# Required for mainnet payments
+PAY_TO_ADDRESS=0xYourWalletAddress
+CDP_API_KEY_ID=your_cdp_key_id
+CDP_API_KEY_SECRET=your_cdp_key_secret
+
+# Optional
+MODE=mainnet
+POSTER_PRICE=0.10
+PORT=8080
+```
+
+### Running Locally
 
 ```bash
-python create_map_poster.py --city <city> --country <country> [options]
+# Start the server
+cd server && npm start
+
+# Or with auto-reload
+cd server && npm run dev
 ```
 
-### Options
+Open [http://localhost:8080](http://localhost:8080) in your browser.
 
-| Option | Short | Description | Default |
-|--------|-------|-------------|---------|
-| `--city` | `-c` | City name | required |
-| `--country` | `-C` | Country name | required |
-| `--theme` | `-t` | Theme name | feature_based |
-| `--distance` | `-d` | Map radius in meters | 29000 |
-| `--list-themes` | | List all available themes | |
-
-### Examples
+### Building Frontend
 
 ```bash
-# Iconic grid patterns
-python create_map_poster.py -c "New York" -C "USA" -t noir -d 12000           # Manhattan grid
-python create_map_poster.py -c "Barcelona" -C "Spain" -t warm_beige -d 8000   # Eixample district
-
-# Waterfront & canals
-python create_map_poster.py -c "Venice" -C "Italy" -t blueprint -d 4000       # Canal network
-python create_map_poster.py -c "Amsterdam" -C "Netherlands" -t ocean -d 6000  # Concentric canals
-python create_map_poster.py -c "Dubai" -C "UAE" -t midnight_blue -d 15000     # Palm & coastline
-
-# Radial patterns
-python create_map_poster.py -c "Paris" -C "France" -t pastel_dream -d 10000   # Haussmann boulevards
-python create_map_poster.py -c "Moscow" -C "Russia" -t noir -d 12000          # Ring roads
-
-# Organic old cities
-python create_map_poster.py -c "Tokyo" -C "Japan" -t japanese_ink -d 15000    # Dense organic streets
-python create_map_poster.py -c "Marrakech" -C "Morocco" -t terracotta -d 5000 # Medina maze
-python create_map_poster.py -c "Rome" -C "Italy" -t warm_beige -d 8000        # Ancient layout
-
-# Coastal cities
-python create_map_poster.py -c "San Francisco" -C "USA" -t sunset -d 10000    # Peninsula grid
-python create_map_poster.py -c "Sydney" -C "Australia" -t ocean -d 12000      # Harbor city
-python create_map_poster.py -c "Mumbai" -C "India" -t contrast_zones -d 18000 # Coastal peninsula
-
-# River cities
-python create_map_poster.py -c "London" -C "UK" -t noir -d 15000              # Thames curves
-python create_map_poster.py -c "Budapest" -C "Hungary" -t copper_patina -d 8000  # Danube split
-
-# List available themes
-python create_map_poster.py --list-themes
+npm run build
 ```
 
-### Distance Guide
+---
 
-| Distance | Best for |
-|----------|----------|
-| 4000-6000m | Small/dense cities (Venice, Amsterdam center) |
-| 8000-12000m | Medium cities, focused downtown (Paris, Barcelona) |
-| 15000-20000m | Large metros, full city view (Tokyo, Mumbai) |
+## API Reference
 
-## Web Interface
+### Generate a Poster
 
-A FastAPI web service with an HTML frontend is also available.
-
-### Running the Server
-
-```bash
-python3 -m uvicorn app.main:app --reload --port 8000
+```http
+POST /api/posters
 ```
 
-Then open http://localhost:8000 in your browser.
+Requires x402 payment header with $0.10 USDC.
 
-### API Endpoints
+**Request Body:**
+```json
+{
+  "city": "San Francisco",
+  "state": "California",
+  "country": "United States",
+  "theme": "sunset",
+  "size": "city",
+  "showInGallery": true
+}
+```
+
+**Response:**
+```json
+{
+  "job_id": "abc123",
+  "status": "pending",
+  "message": "Poster generation started"
+}
+```
+
+### Check Job Status
+
+```http
+GET /api/jobs/:jobId
+```
+
+### WebSocket Updates
+
+```
+ws://localhost:8080/ws/jobs/:jobId
+```
+
+Receive real-time progress updates:
+```json
+{
+  "type": "job_update",
+  "status": "processing",
+  "progress": 45,
+  "message": "Rendering map..."
+}
+```
+
+### Download Poster
+
+```http
+GET /api/posters/:jobId
+```
+
+### Other Endpoints
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/` | GET | Web frontend |
-| `/docs` | GET | Interactive API documentation |
 | `/health` | GET | Health check |
-| `/themes` | GET | List available themes |
-| `/posters` | POST | Generate a poster |
-| `/jobs/{id}` | GET | Check job status |
+| `/api/themes` | GET | List available themes |
+| `/api/gallery` | GET | Get community gallery |
+| `/api/gallery/thumbnail/:jobId` | GET | Get poster thumbnail |
+| `/api/gallery/image/:jobId` | GET | Get full poster image |
+
+---
 
 ## Themes
 
-17 themes available in `themes/` directory:
+17 themes available in the `themes/` directory:
 
-| Theme | Style |
-|-------|-------|
-| `feature_based` | Classic black & white with road hierarchy |
-| `gradient_roads` | Smooth gradient shading |
-| `contrast_zones` | High contrast urban density |
-| `noir` | Pure black background, white roads |
-| `midnight_blue` | Navy background with gold roads |
-| `blueprint` | Architectural blueprint aesthetic |
-| `neon_cyberpunk` | Dark with electric pink/cyan |
-| `warm_beige` | Vintage sepia tones |
-| `pastel_dream` | Soft muted pastels |
-| `japanese_ink` | Minimalist ink wash style |
-| `forest` | Deep greens and sage |
-| `ocean` | Blues and teals for coastal cities |
-| `terracotta` | Mediterranean warmth |
-| `sunset` | Warm oranges and pinks |
-| `autumn` | Seasonal burnt oranges and reds |
-| `copper_patina` | Oxidized copper aesthetic |
-| `monochrome_blue` | Single blue color family |
+| Theme | Description | Colors |
+|-------|-------------|--------|
+| `feature_based` | Classic black & white with road hierarchy | Black/White |
+| `noir` | Pure black background, crisp white roads | Black/White |
+| `midnight_blue` | Navy background with gold accent roads | Navy/Gold |
+| `blueprint` | Architectural blueprint aesthetic | Blue/White |
+| `neon_cyberpunk` | Dark with electric pink and cyan | Black/Pink/Cyan |
+| `warm_beige` | Vintage sepia tones | Cream/Brown |
+| `japanese_ink` | Minimalist ink wash style | Cream/Black |
+| `pastel_dream` | Soft muted pastels | Pink/Lavender |
+| `forest` | Deep greens and sage | Green/Cream |
+| `ocean` | Blues and teals for coastal cities | Blue/Teal |
+| `terracotta` | Mediterranean warmth | Orange/Brown |
+| `sunset` | Warm oranges and pinks | Orange/Pink |
+| `autumn` | Seasonal burnt oranges and reds | Orange/Red |
+| `copper_patina` | Oxidized copper aesthetic | Teal/Copper |
+| `monochrome_blue` | Single blue color family | Blue |
+| `gradient_roads` | Smooth gradient shading | Various |
+| `contrast_zones` | High contrast urban density | Black/White |
 
-## Output
+### Creating Custom Themes
 
-Posters are saved to `posters/` directory with format:
-```
-{city}_{theme}_{YYYYMMDD_HHMMSS}.png
-```
-
-## Adding Custom Themes
-
-Create a JSON file in `themes/` directory:
+Add a JSON file to the `themes/` directory:
 
 ```json
 {
@@ -148,7 +225,6 @@ Create a JSON file in `themes/` directory:
   "description": "Description of the theme",
   "bg": "#FFFFFF",
   "text": "#000000",
-  "gradient_color": "#FFFFFF",
   "water": "#C0C0C0",
   "parks": "#F0F0F0",
   "road_motorway": "#0A0A0A",
@@ -160,123 +236,117 @@ Create a JSON file in `themes/` directory:
 }
 ```
 
-## Project Structure
+---
 
-```
-map_poster/
-├── create_map_poster.py  # CLI script
-├── app/                  # FastAPI web service
-│   ├── main.py           # App entry point
-│   ├── routers/          # API route handlers
-│   └── services/         # Business logic
-├── static/               # Frontend HTML/CSS/JS
-├── themes/               # Theme JSON files
-├── fonts/                # Roboto font files
-├── posters/              # Generated posters
-└── README.md
-```
+## Map Size Presets
 
-## Hacker's Guide
+| Preset | Distance | Best For |
+|--------|----------|----------|
+| `neighborhood` | 2km | Dense urban cores, specific districts |
+| `small` | 4km | Small towns, historic centers |
+| `town` | 6km | Towns, focused city areas |
+| `city` | 12km | Standard city view (default) |
+| `metro` | 20km | Large metropolitan areas |
+| `region` | 35km | Wide regional overview |
 
-Quick reference for contributors who want to extend or modify the script.
+---
 
-### Architecture Overview
+## CLI Usage
 
-```
-┌─────────────────┐     ┌──────────────┐     ┌─────────────────┐
-│   CLI Parser    │────▶│  Geocoding   │────▶│  Data Fetching  │
-│   (argparse)    │     │  (Nominatim) │     │    (OSMnx)      │
-└─────────────────┘     └──────────────┘     └─────────────────┘
-                                                     │
-                        ┌──────────────┐             ▼
-                        │    Output    │◀────┌─────────────────┐
-                        │  (matplotlib)│     │   Rendering     │
-                        └──────────────┘     │  (matplotlib)   │
-                                             └─────────────────┘
+Generate posters directly from the command line:
+
+```bash
+python create_map_poster.py --city "New York" --country "USA" --theme noir --size city
 ```
 
-### Key Functions
+### Options
 
-| Function | Purpose | Modify when... |
-|----------|---------|----------------|
-| `get_coordinates()` | City → lat/lon via Nominatim | Switching geocoding provider |
-| `create_poster()` | Main rendering pipeline | Adding new map layers |
-| `get_edge_colors_by_type()` | Road color by OSM highway tag | Changing road styling |
-| `get_edge_widths_by_type()` | Road width by importance | Adjusting line weights |
-| `create_gradient_fade()` | Top/bottom fade effect | Modifying gradient overlay |
-| `load_theme()` | JSON theme → dict | Adding new theme properties |
+| Option | Short | Description | Default |
+|--------|-------|-------------|---------|
+| `--city` | `-c` | City name | required |
+| `--country` | `-C` | Country name | required |
+| `--state` | `-s` | State/region | optional |
+| `--theme` | `-t` | Theme name | feature_based |
+| `--size` | | Size preset | auto |
+| `--distance` | `-d` | Custom radius in meters | auto |
+| `--output` | `-o` | Output file path | auto |
+| `--preview` | | Low-res 72 DPI preview | false |
+| `--list-themes` | | List all themes | |
 
-### Rendering Layers (z-order)
+---
 
-```
-z=11  Text labels (city, country, coords)
-z=10  Gradient fades (top & bottom)
-z=3   Roads (via ox.plot_graph)
-z=2   Parks (green polygons)
-z=1   Water (blue polygons)
-z=0   Background color
-```
+## Deployment
 
-### OSM Highway Types → Road Hierarchy
+### Railway
 
-```python
-# In get_edge_colors_by_type() and get_edge_widths_by_type()
-motorway, motorway_link     → Thickest (1.2), darkest
-trunk, primary              → Thick (1.0)
-secondary                   → Medium (0.8)
-tertiary                    → Thin (0.6)
-residential, living_street  → Thinnest (0.4), lightest
-```
+This project is configured for deployment on [Railway](https://railway.app):
 
-### Adding New Features
+1. Connect your GitHub repository
+2. Add environment variables in Railway dashboard
+3. Attach a volume at `/app/server/data` for persistence
+4. Deploy
 
-**New map layer (e.g., railways):**
-```python
-# In create_poster(), after parks fetch:
-try:
-    railways = ox.features_from_point(point, tags={'railway': 'rail'}, dist=dist)
-except:
-    railways = None
+The included `railway.json` and `Dockerfile` handle the build configuration.
 
-# Then plot before roads:
-if railways is not None and not railways.empty:
-    railways.plot(ax=ax, color=THEME['railway'], linewidth=0.5, zorder=2.5)
+### Environment Variables for Production
+
+```env
+MODE=mainnet
+PAY_TO_ADDRESS=0xYourAddress
+CDP_API_KEY_ID=your_key
+CDP_API_KEY_SECRET=your_secret
+CDP_WALLET_SECRET=your_wallet_secret
 ```
 
-**New theme property:**
-1. Add to theme JSON: `"railway": "#FF0000"`
-2. Use in code: `THEME['railway']`
-3. Add fallback in `load_theme()` default dict
+---
 
-### Typography Positioning
+## Architecture
 
-All text uses `transform=ax.transAxes` (0-1 normalized coordinates):
 ```
-y=0.14  City name (spaced letters)
-y=0.125 Decorative line
-y=0.10  Country name
-y=0.07  Coordinates
-y=0.02  Attribution (bottom-right)
+┌─────────────────────────────────────────────────────────────────┐
+│                         Frontend                                 │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────────┐ │
+│  │  Search  │  │  Themes  │  │  Wallet  │  │  Progress/Result │ │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────────┬─────────┘ │
+└───────┼─────────────┼─────────────┼─────────────────┼───────────┘
+        │             │             │                 │
+        ▼             ▼             ▼                 ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      Node.js Server                              │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────────┐ │
+│  │  Photon  │  │  Themes  │  │   x402   │  │    WebSocket     │ │
+│  │  Proxy   │  │   API    │  │ Payments │  │    Updates       │ │
+│  └──────────┘  └──────────┘  └────┬─────┘  └────────┬─────────┘ │
+└───────────────────────────────────┼─────────────────┼───────────┘
+                                    │                 │
+                                    ▼                 │
+┌─────────────────────────────────────────────────────┼───────────┐
+│                    Python Generator                  │           │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐          │           │
+│  │ Nominatim│  │  OSMnx   │  │Matplotlib│──────────┘           │
+│  │ Geocode  │  │  Fetch   │  │  Render  │                      │
+│  └──────────┘  └──────────┘  └──────────┘                      │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-### Useful OSMnx Patterns
+---
 
-```python
-# Get all buildings
-buildings = ox.features_from_point(point, tags={'building': True}, dist=dist)
+## Credits
 
-# Get specific amenities
-cafes = ox.features_from_point(point, tags={'amenity': 'cafe'}, dist=dist)
+- Map data © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors
+- Geocoding by [Photon](https://photon.komoot.io/) (Komoot)
+- Graph analysis by [OSMnx](https://github.com/gboeing/osmnx)
+- Payments via [x402 Protocol](https://x402.org) on [Base](https://base.org)
 
-# Different network types
-G = ox.graph_from_point(point, dist=dist, network_type='drive')  # roads only
-G = ox.graph_from_point(point, dist=dist, network_type='bike')   # bike paths
-G = ox.graph_from_point(point, dist=dist, network_type='walk')   # pedestrian
-```
+---
 
-### Performance Tips
+## License
 
-- Large `dist` values (>20km) = slow downloads + memory heavy
-- Cache coordinates locally to avoid Nominatim rate limits
-- Use `network_type='drive'` instead of `'all'` for faster renders
-- Reduce `dpi` from 300 to 150 for quick previews
+MIT License. See [LICENSE](LICENSE) for details.
+
+---
+
+<p align="center">
+  <strong>Cartograph</strong> — Bespoke City Prints<br>
+  <a href="https://cartograph.art">cartograph.art</a>
+</p>
