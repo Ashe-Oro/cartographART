@@ -1,7 +1,7 @@
 FROM python:3.11-slim
 
 # Cache buster - change this value to force a full rebuild
-ARG CACHE_BUST=3
+ARG CACHE_BUST=4
 
 # Build-time arg for Vite environment variables
 ARG VITE_WALLETCONNECT_PROJECT_ID

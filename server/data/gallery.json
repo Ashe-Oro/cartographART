@@ -1,0 +1,114 @@
+{
+  "entries": [
+    {
+      "jobId": "8075a869-d05a-440c-b594-f14e903e18c3",
+      "city": "Austin",
+      "state": "Texas",
+      "country": "United States",
+      "theme": "blueprint",
+      "themeName": "Blueprint",
+      "bgColor": "#1A3A5C",
+      "textColor": "#E8F4FF",
+      "createdAt": "2026-01-21T19:21:42.366Z"
+    },
+    {
+      "jobId": "gallery-barcelona-001",
+      "city": "Barcelona",
+      "state": null,
+      "country": "Spain",
+      "theme": "warm_beige",
+      "themeName": "Warm Beige",
+      "bgColor": "#F5F0E8",
+      "textColor": "#6B5B4F",
+      "createdAt": "2026-01-08T17:29:24.000Z"
+    },
+    {
+      "jobId": "gallery-dubai-002",
+      "city": "Dubai",
+      "state": null,
+      "country": "UAE",
+      "theme": "midnight_blue",
+      "themeName": "Midnight Blue",
+      "bgColor": "#0A1628",
+      "textColor": "#D4AF37",
+      "createdAt": "2026-01-08T17:49:20.000Z"
+    },
+    {
+      "jobId": "gallery-marrakech-003",
+      "city": "Marrakech",
+      "state": null,
+      "country": "Morocco",
+      "theme": "terracotta",
+      "themeName": "Terracotta",
+      "bgColor": "#F5EDE4",
+      "textColor": "#8B4513",
+      "createdAt": "2026-01-08T18:08:21.000Z"
+    },
+    {
+      "jobId": "gallery-melbourne-004",
+      "city": "Melbourne",
+      "state": null,
+      "country": "Australia",
+      "theme": "forest",
+      "themeName": "Forest",
+      "bgColor": "#F0F4F0",
+      "textColor": "#2D4A3E",
+      "createdAt": "2026-01-08T18:14:59.000Z"
+    },
+    {
+      "jobId": "gallery-mumbai-005",
+      "city": "Mumbai",
+      "state": null,
+      "country": "India",
+      "theme": "contrast_zones",
+      "themeName": "Contrast Zones",
+      "bgColor": "#FFFFFF",
+      "textColor": "#000000",
+      "createdAt": "2026-01-08T17:03:25.000Z"
+    },
+    {
+      "jobId": "gallery-sanfrancisco-006",
+      "city": "San Francisco",
+      "state": "California",
+      "country": "USA",
+      "theme": "sunset",
+      "themeName": "Sunset",
+      "bgColor": "#FDF5F0",
+      "textColor": "#C45C3E",
+      "createdAt": "2026-01-08T18:41:22.000Z"
+    },
+    {
+      "jobId": "gallery-singapore-007",
+      "city": "Singapore",
+      "state": null,
+      "country": "Singapore",
+      "theme": "neon_cyberpunk",
+      "themeName": "Neon Cyberpunk",
+      "bgColor": "#0D0D1A",
+      "textColor": "#00FFFF",
+      "createdAt": "2026-01-08T18:45:03.000Z"
+    },
+    {
+      "jobId": "gallery-tokyo-008",
+      "city": "Tokyo",
+      "state": null,
+      "country": "Japan",
+      "theme": "japanese_ink",
+      "themeName": "Japanese Ink",
+      "bgColor": "#FAF8F5",
+      "textColor": "#2C2C2C",
+      "createdAt": "2026-01-08T16:58:30.000Z"
+    },
+    {
+      "jobId": "gallery-venice-009",
+      "city": "Venice",
+      "state": null,
+      "country": "Italy",
+      "theme": "blueprint",
+      "themeName": "Blueprint",
+      "bgColor": "#1A3A5C",
+      "textColor": "#E8F4FF",
+      "createdAt": "2026-01-08T16:55:27.000Z"
+    }
+  ]
+}

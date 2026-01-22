@@ -1,7 +1,7 @@
 # Environment files (use Railway env vars instead)
 .env
 .env.*
-!.env.example
+env.template
 
 # Git
 .git
