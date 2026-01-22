@@ -191,8 +191,7 @@ body {
 .app-container {
     display: grid;
     grid-template-columns: minmax(400px, 500px) 1fr;
-    height: 100vh;
-    overflow: hidden;
+    min-height: 100vh;
 }
 
 /* Panel Styles */
@@ -205,6 +204,8 @@ body {
     border-right: 1px solid var(--ink-medium);
     padding: var(--space-xl) var(--space-lg);
     overflow-y: auto;
+    position: sticky;
+    top: 0;
     height: 100vh;
     overscroll-behavior: contain;
 }
@@ -615,11 +616,8 @@ body {
     align-items: flex-start;
     justify-content: center;
     padding: var(--space-xl);
-    padding-right: 0; /* Scrollbar flush with viewport edge */
     position: relative;
-    overflow-y: auto;
-    height: 100vh;
-    overscroll-behavior: contain;
+    min-height: 100vh;
     background:
         radial-gradient(ellipse at 30% 20%, rgba(201, 168, 124, 0.05) 0%, transparent 50%),
         radial-gradient(ellipse at 70% 80%, rgba(201, 168, 124, 0.03) 0%, transparent 50%),
@@ -631,9 +629,6 @@ body {
     flex-direction: column;
     align-items: center;
     text-align: center;
-    max-height: 100%;
-    overflow-y: auto;
-    padding-right: var(--space-xl); /* Compensate for panel's removed right padding */
 }
 
 .preview-frame {
@@ -787,7 +782,7 @@ body {
 
 .deco-br {
     bottom: var(--space-lg);
-    right: calc(var(--space-lg) + 8px); /* Account for scrollbar */
+    right: var(--space-lg);
     border-left: none;
     border-top: none;
 }
@@ -958,7 +953,6 @@ body {
     align-items: center;
     justify-content: center;
     text-align: center;
-    padding-right: var(--space-xl); /* Compensate for panel's removed right padding */
 }
 
 .result-frame-large {
