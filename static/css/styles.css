@@ -646,12 +646,7 @@ body {
     transition: transform 0.6s var(--ease-out), box-shadow 0.6s var(--ease-out);
 }
 
-.preview-frame:hover {
-    transform: translateY(-8px) scale(1.02);
-    box-shadow:
-        0 40px 100px -30px rgba(0,0,0,0.6),
-        0 0 0 1px rgba(255,255,255,0.08);
-}
+/* Hover effect disabled - was causing unwanted scaling */
 
 .preview-mat {
     padding: 16px;
@@ -1365,7 +1360,7 @@ appkit-button::part(button) {
     padding-top: var(--space-lg);
     border-top: 1px solid var(--ink-medium);
     width: 100%;
-    max-width: 620px;
+    max-width: 800px;
 }
 
 .gallery-header {
@@ -1391,15 +1386,15 @@ appkit-button::part(button) {
 }
 
 .gallery-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.25rem;
     max-width: 100%;
 }
 
 .gallery-item {
     position: relative;
-    aspect-ratio: 3/4;
     border-radius: 3px;
     overflow: hidden;
     cursor: pointer;
@@ -1415,9 +1410,10 @@ appkit-button::part(button) {
 }
 
 .gallery-item-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    display: block;
+    height: 180px;
+    width: auto;
+    object-fit: contain;
     transition: transform 0.3s var(--ease-out);
 }
 
@@ -1463,8 +1459,8 @@ appkit-button::part(button) {
 }
 
 @media (max-width: 600px) {
-    .gallery-grid {
-        grid-template-columns: repeat(4, 1fr);
+    .gallery-item-img {
+        height: 140px;
     }
 }
 
