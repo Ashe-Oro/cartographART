@@ -43,6 +43,7 @@ export async function generatePoster(jobId, request) {
     '--country', country,
     '--theme', theme || 'feature_based',
     '--output', outputPath,
+    '--preview', // Use 72 DPI to reduce memory usage
   ];
 
   if (state) {
@@ -51,6 +52,10 @@ export async function generatePoster(jobId, request) {
 
   if (size && size !== 'auto') {
     args.push('--size', size);
+  } else if (!distance) {
+    // Default to 'city' size (12km) to prevent OOM on large metros
+    // User can override with explicit size or distance
+    args.push('--size', 'city');
   }
 
   if (distance) {
