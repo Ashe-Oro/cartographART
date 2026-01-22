@@ -43,7 +43,6 @@ export async function generatePoster(jobId, request) {
     '--country', country,
     '--theme', theme || 'feature_based',
     '--output', outputPath,
-    '--preview', // Use 72 DPI to reduce memory usage
   ];
 
   if (state) {
