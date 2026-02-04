@@ -11,6 +11,7 @@ import { dirname, join } from 'path';
 
 import { setupX402Middleware } from './middleware/x402.js';
 import { errorHandler, notFoundHandler } from './middleware/errors.js';
+import { rateLimit, rateLimitHeaders } from './middleware/rateLimit.js';
 import { themesRouter } from './routes/themes.js';
 import { jobsRouter } from './routes/jobs.js';
 import { postersRouter } from './routes/posters.js';
@@ -103,12 +104,15 @@ export function createApp(options = {}) {
   });
 
   // API routes (themes, jobs, and gallery don't require payment)
+  // Apply rate limiting to API endpoints
+  app.use('/api', rateLimitHeaders('api'));
   app.use('/api', themesRouter);
   app.use('/api', jobsRouter);
   app.use('/api', galleryRouter);
 
-  // x402 protected routes
+  // x402 protected routes (rate limited separately)
   setupX402Middleware(app);
+  app.use('/api/posters', rateLimit('posters'));
   app.use('/api', postersRouter);
 
   // WebSocket routes
