@@ -43,7 +43,19 @@ export function createApp(options = {}) {
 
   // Serve static files
   const staticDir = join(__dirname, '../../static');
+  const rootDir = join(__dirname, '../..');
   app.use('/static', express.static(staticDir));
+
+  // Serve well-known files at root for discoverability
+  app.get('/robots.txt', (req, res) => {
+    res.sendFile(join(staticDir, 'robots.txt'));
+  });
+  app.get('/llms.txt', (req, res) => {
+    res.type('text/plain').sendFile(join(rootDir, 'llms.txt'));
+  });
+  app.get('/llms-full.txt', (req, res) => {
+    res.type('text/plain').sendFile(join(rootDir, 'llms-full.txt'));
+  });
 
   // Health check (no payment required)
   app.get('/health', (req, res) => {
