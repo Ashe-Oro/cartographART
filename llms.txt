@@ -1,0 +1,50 @@
+# Cartograph
+
+> Transform any location into museum-quality cartographic art. A web app that generates minimalist map posters for any city worldwide, powered by OpenStreetMap data and x402 micropayments on Base.
+
+## Overview
+
+Cartograph creates high-resolution (300 DPI) printable map posters:
+
+- **Any location**: Search for any city using Photon geocoding
+- **17 themes**: Japanese ink, neon cyberpunk, blueprint, sunset, noir, and more
+- **Smart sizing**: Auto-detects optimal map radius based on city importance
+- **Micropayments**: $0.10 USDC via x402 protocol on Base
+- **Real-time progress**: WebSocket updates during generation
+- **Community gallery**: Browse and share creations
+
+## Tech Stack
+
+- Frontend: Vanilla JS, Vite, Web3Modal/Reown AppKit
+- Backend: Node.js, Express, WebSocket
+- Payments: x402 Protocol with Coinbase CDP
+- Map Generation: Python, OSMnx, Matplotlib
+- Data: OpenStreetMap via Overpass API
+- Geocoding: Photon (Komoot)
+
+## Docs
+
+- [GitHub Repository](https://github.com/Ashe-Oro/cartographART): Source code, installation, and full documentation
+- [x402 Protocol](https://x402.org): Permissionless HTTP payments used for micropayments
+- [API Reference](https://github.com/Ashe-Oro/cartographART#api-reference): REST endpoints for poster generation
+
+## API
+
+The main endpoint requires x402 payment header:
+
+```
+POST /api/posters
+```
+
+Request: `{ "city": "Tokyo", "country": "Japan", "theme": "japanese_ink", "size": "city" }`
+
+Other endpoints:
+- `GET /api/themes` — List available themes
+- `GET /api/jobs/:jobId` — Check generation status
+- `GET /api/gallery` — Community gallery
+- `WS /ws/jobs/:jobId` — Real-time progress updates
+
+## Optional
+
+- [OSMnx Documentation](https://osmnx.readthedocs.io/): Python library for street network analysis
+- [OpenStreetMap](https://www.openstreetmap.org/): Map data source
