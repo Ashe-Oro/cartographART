@@ -50,6 +50,14 @@ export function createApp(options = {}) {
     res.json({ status: 'ok' });
   });
 
+  // OpenAPI specification
+  app.get('/api/openapi.json', (req, res) => {
+    res.sendFile(join(staticDir, 'openapi.json'));
+  });
+  app.get('/openapi.json', (req, res) => {
+    res.sendFile(join(staticDir, 'openapi.json'));
+  });
+
   // API routes (themes, jobs, and gallery don't require payment)
   app.use('/api', themesRouter);
   app.use('/api', jobsRouter);

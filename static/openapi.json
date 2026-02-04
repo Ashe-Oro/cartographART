@@ -1,0 +1,563 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Cartograph API",
+    "description": "Transform any location into museum-quality cartographic art. Generate minimalist map posters for any city worldwide.\n\n## Authentication\n\nThe `POST /api/posters` endpoint requires x402 payment. All other endpoints are free.\n\n### x402 Payment Flow\n\n1. Request without payment → Server returns HTTP 402 with `Payment-Required` header\n2. Decode the base64 `Payment-Required` header to get payment details\n3. Sign and send payment, include proof in `X-PAYMENT` header\n4. Retry request with payment header\n\nSee [x402.org](https://x402.org) for protocol details.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Cartograph",
+      "url": "https://cartograph.art"
+    },
+    "license": {
+      "name": "CC BY-NC 4.0",
+      "url": "https://creativecommons.org/licenses/by-nc/4.0/"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://cartograph.art",
+      "description": "Production server"
+    }
+  ],
+  "paths": {
+    "/api/posters": {
+      "post": {
+        "operationId": "createPoster",
+        "summary": "Generate a map poster",
+        "description": "Create a custom city map poster. **Requires x402 payment ($0.10 USDC on Base).** Without valid payment, returns HTTP 402 with payment instructions.",
+        "tags": ["Posters"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PosterRequest"
+              },
+              "examples": {
+                "tokyo": {
+                  "summary": "Tokyo with Japanese Ink theme",
+                  "value": {
+                    "city": "Tokyo",
+                    "country": "Japan",
+                    "theme": "japanese_ink",
+                    "size": "city",
+                    "showInGallery": true
+                  }
+                },
+                "sanFrancisco": {
+                  "summary": "San Francisco with Sunset theme",
+                  "value": {
+                    "city": "San Francisco",
+                    "state": "California",
+                    "country": "United States",
+                    "theme": "sunset",
+                    "size": "metro"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Poster generation started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobCreated"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment required",
+            "headers": {
+              "Payment-Required": {
+                "description": "Base64-encoded JSON with payment instructions",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentRequired"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "x402": []
+          }
+        ]
+      }
+    },
+    "/api/posters/{jobId}": {
+      "get": {
+        "operationId": "downloadPoster",
+        "summary": "Download a generated poster",
+        "description": "Download the poster image after generation is complete. Returns a 300 DPI PNG image.",
+        "tags": ["Posters"],
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Job ID from poster creation"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Poster image",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Job not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/jobs/{jobId}": {
+      "get": {
+        "operationId": "getJobStatus",
+        "summary": "Check job status",
+        "description": "Get the current status and progress of a poster generation job.",
+        "tags": ["Jobs"],
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Job ID from poster creation"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Job status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobStatus"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Job not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/themes": {
+      "get": {
+        "operationId": "listThemes",
+        "summary": "List available themes",
+        "description": "Get all available map themes with their descriptions.",
+        "tags": ["Themes"],
+        "responses": {
+          "200": {
+            "description": "List of themes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThemeList"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/gallery": {
+      "get": {
+        "operationId": "getGallery",
+        "summary": "Browse community gallery",
+        "description": "Get posters shared to the public gallery.",
+        "tags": ["Gallery"],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            },
+            "description": "Maximum number of results"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            },
+            "description": "Pagination offset"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Gallery posters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GalleryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/gallery/thumbnail/{jobId}": {
+      "get": {
+        "operationId": "getGalleryThumbnail",
+        "summary": "Get poster thumbnail",
+        "description": "Get a thumbnail image of a gallery poster.",
+        "tags": ["Gallery"],
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Thumbnail image",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/gallery/image/{jobId}": {
+      "get": {
+        "operationId": "getGalleryImage",
+        "summary": "Get full gallery image",
+        "description": "Get the full-size image of a gallery poster.",
+        "tags": ["Gallery"],
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Full poster image",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "healthCheck",
+        "summary": "Health check",
+        "description": "Check if the service is running.",
+        "tags": ["System"],
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": ["ok"]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "PosterRequest": {
+        "type": "object",
+        "required": ["city", "country"],
+        "properties": {
+          "city": {
+            "type": "string",
+            "description": "City name",
+            "example": "Tokyo"
+          },
+          "country": {
+            "type": "string",
+            "description": "Country name",
+            "example": "Japan"
+          },
+          "state": {
+            "type": "string",
+            "description": "State or region (optional)",
+            "example": "California"
+          },
+          "theme": {
+            "type": "string",
+            "description": "Theme identifier",
+            "default": "feature_based",
+            "enum": ["feature_based", "noir", "midnight_blue", "blueprint", "neon_cyberpunk", "warm_beige", "japanese_ink", "pastel_dream", "forest", "ocean", "terracotta", "sunset", "autumn", "copper_patina", "monochrome_blue", "gradient_roads", "contrast_zones"]
+          },
+          "size": {
+            "type": "string",
+            "description": "Map size preset",
+            "default": "city",
+            "enum": ["neighborhood", "small", "town", "city", "metro", "region"]
+          },
+          "showInGallery": {
+            "type": "boolean",
+            "description": "Show in public gallery",
+            "default": false
+          }
+        }
+      },
+      "JobCreated": {
+        "type": "object",
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "description": "Unique job identifier"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending"]
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "JobStatus": {
+        "type": "object",
+        "properties": {
+          "job_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "processing", "completed", "failed"]
+          },
+          "progress": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "message": {
+            "type": "string"
+          },
+          "result": {
+            "type": "object",
+            "properties": {
+              "download_url": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "ThemeList": {
+        "type": "object",
+        "properties": {
+          "themes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Theme"
+            }
+          }
+        }
+      },
+      "Theme": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "GalleryResponse": {
+        "type": "object",
+        "properties": {
+          "posters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GalleryPoster"
+            }
+          },
+          "total": {
+            "type": "integer"
+          }
+        }
+      },
+      "GalleryPoster": {
+        "type": "object",
+        "properties": {
+          "job_id": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "country": {
+            "type": "string"
+          },
+          "theme": {
+            "type": "string"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PaymentRequired": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "example": "Payment Required"
+          },
+          "message": {
+            "type": "string",
+            "example": "This endpoint requires x402 payment"
+          },
+          "x402": {
+            "type": "object",
+            "properties": {
+              "price": {
+                "type": "string",
+                "example": "$0.10"
+              },
+              "network": {
+                "type": "string",
+                "example": "base"
+              },
+              "accepts": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "example": ["USDC"]
+              }
+            }
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "x402": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-PAYMENT",
+        "description": "x402 payment proof. Obtain by first receiving a 402 response, then signing the required payment and encoding the proof as base64. See https://x402.org for details."
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Posters",
+      "description": "Create and download map posters"
+    },
+    {
+      "name": "Jobs",
+      "description": "Track poster generation progress"
+    },
+    {
+      "name": "Themes",
+      "description": "Available map themes"
+    },
+    {
+      "name": "Gallery",
+      "description": "Community poster gallery"
+    },
+    {
+      "name": "System",
+      "description": "System endpoints"
+    }
+  ]
+}
