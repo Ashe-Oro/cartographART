@@ -70,6 +70,37 @@ export function createApp(options = {}) {
     res.sendFile(join(staticDir, 'openapi.json'));
   });
 
+  // x402 discovery endpoint
+  app.get('/.well-known/x402', (req, res) => {
+    res.json({
+      version: '1.0',
+      endpoints: [
+        {
+          path: '/api/posters',
+          method: 'POST',
+          description: 'Generate a custom city map poster',
+          price: {
+            amount: config.posterPrice,
+            currency: 'USDC',
+            network: config.network,
+            chainId: config.networkId === 'base-mainnet' ? 8453 : 84532
+          },
+          accepts: [{
+            scheme: 'exact',
+            network: config.networkId,
+            asset: 'USDC'
+          }]
+        }
+      ],
+      documentation: {
+        llms: '/llms.txt',
+        llmsFull: '/llms-full.txt',
+        openapi: '/openapi.json',
+        protocol: 'https://x402.org'
+      }
+    });
+  });
+
   // API routes (themes, jobs, and gallery don't require payment)
   app.use('/api', themesRouter);
   app.use('/api', jobsRouter);
