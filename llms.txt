@@ -1,0 +1,153 @@
+# Cartograph
+
+> Transform any location into museum-quality cartographic art. A web app that generates minimalist map posters for any city worldwide, powered by OpenStreetMap data and x402 micropayments on Base.
+
+## Overview
+
+Cartograph creates high-resolution (300 DPI) printable map posters:
+
+- **Any location**: Search for any city using Photon geocoding
+- **17 themes**: Japanese ink, neon cyberpunk, blueprint, sunset, noir, and more
+- **Smart sizing**: Auto-detects optimal map radius based on city importance
+- **Micropayments**: $0.10 USDC via x402 protocol on Base
+- **Real-time progress**: WebSocket updates during generation
+- **Community gallery**: Browse and share creations
+
+## Tech Stack
+
+- Frontend: Vanilla JS, Vite, Web3Modal/Reown AppKit
+- Backend: Node.js, Express, WebSocket
+- Payments: x402 Protocol with Coinbase CDP
+- Map Generation: Python, OSMnx, Matplotlib
+- Data: OpenStreetMap via Overpass API
+- Geocoding: Photon (Komoot)
+
+## Payment-Protected Endpoint
+
+**Only one endpoint requires payment:**
+
+```
+POST /api/posters
+```
+
+This endpoint is protected by x402. All other endpoints (themes, gallery, jobs, health) are free.
+
+### Payment Details
+
+- **Price**: $0.10 USDC
+- **Network**: Base (chain ID 8453)
+- **Scheme**: `exact` (EVM-based exact payment)
+- **Protocol**: x402 (HTTP 402 Payment Required)
+
+### How x402 Payment Works
+
+1. **Request without payment** → Server returns `HTTP 402 Payment Required`
+2. **402 response includes** a `Payment-Required` header (base64-encoded JSON) containing:
+   - `x402Version`: Protocol version (currently 2)
+   - `accepts`: Array of accepted payment methods
+   - `payTo`: Wallet address to pay
+   - `maxAmountRequired`: Price in wei
+   - `network`: Chain ID (8453 for Base)
+3. **Agent signs and sends payment** → Include payment proof in `X-PAYMENT` header
+4. **Server verifies payment** → If valid, processes request and returns result
+
+### Example: Agent Payment Flow
+
+**Step 1: Initial request (no payment)**
+```http
+POST /api/posters HTTP/1.1
+Host: cartograph.art
+Content-Type: application/json
+
+{"city": "Tokyo", "country": "Japan", "theme": "japanese_ink", "size": "city"}
+```
+
+**Step 2: Server responds with 402**
+```http
+HTTP/1.1 402 Payment Required
+Payment-Required: eyJ4NDAyVmVyc2lvbiI6MiwiYWNjZXB0cyI6W3sic2NoZW1lIjoiZXhhY3QiLCJuZXR3b3JrIjoiODQ1MyIsIm1heEFtb3VudFJlcXVpcmVkIjoiMTAwMDAwIiwicGF5VG8iOiIweC4uLiJ9XX0=
+```
+
+Decoded `Payment-Required` header:
+```json
+{
+  "x402Version": 2,
+  "accepts": [{
+    "scheme": "exact",
+    "network": "8453",
+    "maxAmountRequired": "100000",
+    "payTo": "0x..."
+  }]
+}
+```
+
+**Step 3: Agent pays and retries**
+```http
+POST /api/posters HTTP/1.1
+Host: cartograph.art
+Content-Type: application/json
+X-PAYMENT: <base64-encoded-payment-proof>
+
+{"city": "Tokyo", "country": "Japan", "theme": "japanese_ink", "size": "city"}
+```
+
+**Step 4: Success response**
+```json
+{
+  "job_id": "abc123",
+  "status": "pending",
+  "message": "Poster generation started"
+}
+```
+
+### Payment Header Format (X-PAYMENT)
+
+The `X-PAYMENT` header contains a base64-encoded JSON object with:
+- `x402Version`: Must match server version (2)
+- `scheme`: Payment scheme used ("exact")
+- `network`: Chain ID ("8453")
+- `payload`: Signed transaction or payment proof
+- `signature`: Cryptographic signature proving payment
+
+For implementation details, see the [x402 SDK documentation](https://github.com/coinbase/x402).
+
+## Free Endpoints (No Payment Required)
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/health` | GET | Health check |
+| `/api/themes` | GET | List all 17 available themes |
+| `/api/jobs/:jobId` | GET | Check poster generation status |
+| `/api/gallery` | GET | Browse community gallery |
+| `/api/gallery/thumbnail/:jobId` | GET | Get poster thumbnail |
+| `/api/gallery/image/:jobId` | GET | Get full poster image |
+| `/ws/jobs/:jobId` | WebSocket | Real-time generation progress |
+
+## Request Body (POST /api/posters)
+
+```json
+{
+  "city": "San Francisco",
+  "state": "California",
+  "country": "United States",
+  "theme": "sunset",
+  "size": "city",
+  "showInGallery": true
+}
+```
+
+**Required fields**: `city`, `country`
+**Optional fields**: `state`, `theme` (default: "feature_based"), `size` (default: "city"), `showInGallery` (default: false)
+
+**Size options**: `neighborhood` (2km), `small` (4km), `town` (6km), `city` (12km), `metro` (20km), `region` (35km)
+
+## Docs
+
+- [GitHub Repository](https://github.com/Ashe-Oro/cartographART): Full source code and documentation
+- [x402 Protocol](https://x402.org): Permissionless HTTP payment standard
+- [x402 SDK](https://github.com/coinbase/x402): Client/server libraries for implementing x402
+
+## Optional
+
+- [OSMnx Documentation](https://osmnx.readthedocs.io/): Python library for street network analysis
+- [OpenStreetMap](https://www.openstreetmap.org/): Map data source
