@@ -125,6 +125,11 @@ export function createApp(options = {}) {
     res.sendFile(join(staticDir, 'index.html'));
   });
 
+  // Markdown version of homepage (per llmstxt.org spec)
+  app.get('/index.html.md', (req, res) => {
+    res.type('text/markdown').sendFile(join(staticDir, 'index.html.md'));
+  });
+
   // Error handling (must be last)
   app.use(notFoundHandler);
   app.use(errorHandler);

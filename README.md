@@ -191,6 +191,19 @@ GET /api/posters/:jobId
 
 ---
 
+## AI / LLM Access
+
+Cartograph is designed to be accessible to AI agents and LLMs:
+
+| Endpoint | Description |
+|----------|-------------|
+| [`/index.html.md`](https://cartograph.art/index.html.md) | Markdown version of homepage ([llmstxt.org](https://llmstxt.org) spec) |
+| [`/openapi.json`](https://cartograph.art/openapi.json) | OpenAPI 3.1 specification |
+| [`/robots.txt`](https://cartograph.art/robots.txt) | Allows AI crawlers (GPTBot, anthropic-ai, etc.) |
+| [`/.well-known/x402`](https://cartograph.art/.well-known/x402) | x402 payment discovery (pricing, network, docs) |
+
+---
+
 ## Themes
 
 17 themes available in the `themes/` directory:
