@@ -10,6 +10,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
 import { setupX402Middleware } from './middleware/x402.js';
+import { errorHandler, notFoundHandler } from './middleware/errors.js';
 import { themesRouter } from './routes/themes.js';
 import { jobsRouter } from './routes/jobs.js';
 import { postersRouter } from './routes/posters.js';
@@ -119,6 +120,10 @@ export function createApp(options = {}) {
   app.get('/', (req, res) => {
     res.sendFile(join(staticDir, 'index.html'));
   });
+
+  // Error handling (must be last)
+  app.use(notFoundHandler);
+  app.use(errorHandler);
 
   return app;
 }
