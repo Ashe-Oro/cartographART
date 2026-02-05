@@ -27,10 +27,10 @@ Allow: /
 User-agent: PerplexityBot
 Allow: /
 
-# Point to llms.txt for LLM-friendly documentation
-# See https://llmstxt.org for the specification
-# LLM-friendly docs: https://cartograph.art/llms.txt
-# Full docs: https://cartograph.art/llms-full.txt
+# AI-friendly documentation
+# Homepage (markdown): https://cartograph.art/index.html.md
+# OpenAPI spec: https://cartograph.art/openapi.json
+# Payment discovery: https://cartograph.art/.well-known/x402
 
 # Sitemap
 Sitemap: https://cartograph.art/sitemap.xml

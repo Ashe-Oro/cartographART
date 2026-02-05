@@ -52,13 +52,6 @@ export function createApp(options = {}) {
   app.get('/robots.txt', (req, res) => {
     res.sendFile(join(staticDir, 'robots.txt'));
   });
-  app.get('/llms.txt', (req, res) => {
-    res.type('text/plain').sendFile(join(rootDir, 'llms.txt'));
-  });
-  app.get('/llms-full.txt', (req, res) => {
-    res.type('text/plain').sendFile(join(rootDir, 'llms-full.txt'));
-  });
-
   // Health check (no payment required)
   app.get('/health', (req, res) => {
     res.json({ status: 'ok' });
@@ -95,8 +88,7 @@ export function createApp(options = {}) {
         }
       ],
       documentation: {
-        llms: '/llms.txt',
-        llmsFull: '/llms-full.txt',
+        homepage: '/index.html.md',
         openapi: '/openapi.json',
         protocol: 'https://x402.org'
       }
