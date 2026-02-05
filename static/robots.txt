@@ -1,0 +1,36 @@
+# Cartograph.art robots.txt
+# https://cartograph.art
+
+# Allow all crawlers by default
+User-agent: *
+Allow: /
+
+# AI/LLM crawlers - explicitly allowed
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: Anthropic-AI
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Cohere-AI
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+# Point to llms.txt for LLM-friendly documentation
+# See https://llmstxt.org for the specification
+# LLM-friendly docs: https://cartograph.art/llms.txt
+# Full docs: https://cartograph.art/llms-full.txt
+
+# Sitemap
+Sitemap: https://cartograph.art/sitemap.xml
