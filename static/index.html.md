@@ -68,8 +68,7 @@ No accounts, no subscriptions. Just connect your wallet and pay per poster.
 Cartograph provides a full API for programmatic access:
 
 - **OpenAPI Spec**: [/openapi.json](/openapi.json)
-- **LLM Documentation**: [/llms.txt](/llms.txt)
-- **Full Documentation**: [/llms-full.txt](/llms-full.txt)
+- **Payment Discovery**: [/.well-known/x402](/.well-known/x402)
 
 ## Links
 
