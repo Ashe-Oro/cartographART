@@ -2,6 +2,7 @@ import { createAppKit } from '@reown/appkit'
 import { base, baseSepolia, solana } from '@reown/appkit/networks'
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
 import { SolanaAdapter } from '@reown/appkit-adapter-solana'
+import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets'
 import { privateKeyToAccount } from 'viem/accounts'
 import { toHex, getAddress as checksumAddress } from 'viem'
 import { VersionedMessage, VersionedTransaction } from '@solana/web3.js'
@@ -36,8 +37,10 @@ const wagmiAdapter = new WagmiAdapter({
   networks
 })
 
-// Create Solana adapter
-const solanaAdapter = new SolanaAdapter()
+// Create Solana adapter with wallet support
+const solanaAdapter = new SolanaAdapter({
+  wallets: [new PhantomWalletAdapter(), new SolflareWalletAdapter()]
+})
 
 // Create AppKit modal with both adapters
 const modal = createAppKit({
