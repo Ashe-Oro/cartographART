@@ -1,7 +1,7 @@
 FROM python:3.11-slim
 
 # Cache buster - change this value to force a full rebuild
-ARG CACHE_BUST=6
+ARG CACHE_BUST=7
 
 # Build-time arg for Vite environment variables
 ARG VITE_WALLETCONNECT_PROJECT_ID
@@ -29,11 +29,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy root package files and install frontend dependencies
 COPY package.json package-lock.json ./
-RUN npm install
+RUN echo "CACHE_BUST=$CACHE_BUST" && npm ci
 
 # Copy server package files and install server dependencies
 COPY server/package.json server/package-lock.json ./server/
-RUN cd server && npm install
+RUN cd server && npm ci
 
 # Copy application code
 COPY . .
