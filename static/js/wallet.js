@@ -7,7 +7,7 @@ import { toHex, getAddress as checksumAddress } from 'viem'
 import { VersionedMessage, VersionedTransaction } from '@solana/web3.js'
 import { wrapFetchWithPayment } from '@x402/fetch'
 import { registerExactEvmScheme } from '@x402/evm/exact/client'
-import { registerExactSvmScheme } from '@x402/svm/exact/client'
+import { ExactSvmScheme } from '@x402/svm/exact/client'
 import { x402Client } from '@x402/core/client'
 
 // ============================================
@@ -243,7 +243,10 @@ async function createX402Fetch() {
     const address = getAddress()
     const provider = solanaProvider || await getProvider()
     const signer = createSolanaWalletSigner(provider, address)
-    registerExactSvmScheme(client, { signer })
+    // Use ExactSvmScheme directly (registerExactSvmScheme has a bug that doesn't forward rpcUrl)
+    // The default api.mainnet-beta.solana.com blocks browser requests with 403
+    const solanaRpcUrl = `https://rpc.walletconnect.org/v1?chainId=solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp&projectId=${projectId}`
+    client.register('solana:*', new ExactSvmScheme(signer, { rpcUrl: solanaRpcUrl }))
   } else {
     console.log('[x402] Creating EVM wallet signer')
     const signer = await createWalletSigner()
