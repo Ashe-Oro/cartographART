@@ -1,5 +1,5 @@
 import { createAppKit } from '@reown/appkit'
-import { base, baseSepolia, solana } from '@reown/appkit/networks'
+import { base, solana } from '@reown/appkit/networks'
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
 import { SolanaAdapter } from '@reown/appkit-adapter-solana'
 import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets'
@@ -29,7 +29,7 @@ if (!TEST_MODE && (!projectId || projectId === 'undefined')) {
 }
 
 // Support Base (EVM) and Solana networks
-const networks = [base, baseSepolia, solana]
+const networks = [base, solana]
 
 // Create Wagmi adapter (EVM)
 const wagmiAdapter = new WagmiAdapter({
