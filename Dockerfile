@@ -29,11 +29,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy root package files and install frontend dependencies
 COPY package.json package-lock.json ./
-RUN echo "CACHE_BUST=$CACHE_BUST" && npm ci
+RUN echo "CACHE_BUST=$CACHE_BUST" && npm install
 
 # Copy server package files and install server dependencies
 COPY server/package.json server/package-lock.json ./server/
-RUN cd server && npm ci
+RUN cd server && npm install
 
 # Copy application code
 COPY . .
