@@ -1,10 +1,13 @@
 import { createAppKit } from '@reown/appkit'
-import { base, baseSepolia } from '@reown/appkit/networks'
+import { base, baseSepolia, solana } from '@reown/appkit/networks'
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
+import { SolanaAdapter } from '@reown/appkit-adapter-solana'
 import { privateKeyToAccount } from 'viem/accounts'
 import { toHex, getAddress as checksumAddress } from 'viem'
+import { VersionedMessage, VersionedTransaction } from '@solana/web3.js'
 import { wrapFetchWithPayment } from '@x402/fetch'
 import { registerExactEvmScheme } from '@x402/evm/exact/client'
+import { registerExactSvmScheme } from '@x402/svm/exact/client'
 import { x402Client } from '@x402/core/client'
 
 // ============================================
@@ -24,18 +27,21 @@ if (!TEST_MODE && (!projectId || projectId === 'undefined')) {
   console.error('VITE_WALLETCONNECT_PROJECT_ID is not set. Get one at https://cloud.reown.com')
 }
 
-// Support both Base mainnet and Sepolia testnet
-const networks = [base, baseSepolia]
+// Support Base (EVM) and Solana networks
+const networks = [base, baseSepolia, solana]
 
-// Create Wagmi adapter
+// Create Wagmi adapter (EVM)
 const wagmiAdapter = new WagmiAdapter({
   projectId,
   networks
 })
 
-// Create AppKit modal
+// Create Solana adapter
+const solanaAdapter = new SolanaAdapter()
+
+// Create AppKit modal with both adapters
 const modal = createAppKit({
-  adapters: [wagmiAdapter],
+  adapters: [wagmiAdapter, solanaAdapter],
   networks,
   projectId,
   metadata: {
@@ -55,6 +61,24 @@ const modal = createAppKit({
     '--w3m-border-radius-master': '2px'
   }
 })
+
+// Track providers for each chain family
+let evmProvider = null
+let solanaProvider = null
+
+modal.subscribeProviders(state => {
+  if (state['eip155']) evmProvider = state['eip155']
+  if (state['solana']) solanaProvider = state['solana']
+})
+
+/**
+ * Detect if the currently connected wallet is on Solana
+ */
+function isSolanaConnected() {
+  const address = modal.getAddress()
+  // EVM addresses start with 0x, Solana addresses are base58 (no 0x prefix)
+  return address && !address.startsWith('0x')
+}
 
 /**
  * Get the current connected wallet address
@@ -163,23 +187,80 @@ async function createWalletSigner() {
 }
 
 /**
- * Create an x402 fetch client with wallet signer
+ * Create a TransactionSigner compatible with @x402/svm from the Solana wallet provider.
+ * Bridges the Reown AppKit Solana provider (which uses @solana/web3.js v1 VersionedTransaction)
+ * to the @solana/kit v2 TransactionSigner interface that @x402/svm expects.
+ */
+function createSolanaWalletSigner(provider, address) {
+  return {
+    address,
+    signTransactions: async (transactions) => {
+      return Promise.all(transactions.map(async (tx) => {
+        // tx.messageBytes is the compiled Solana message (same binary format for v1 and v2)
+        const message = VersionedMessage.deserialize(new Uint8Array(tx.messageBytes))
+        const vt = new VersionedTransaction(message)
+
+        // Copy any existing signatures into the VersionedTransaction
+        const accountKeys = message.staticAccountKeys
+        for (const [addr, sig] of Object.entries(tx.signatures)) {
+          if (sig) {
+            const idx = accountKeys.findIndex(key => key.toBase58() === addr)
+            if (idx !== -1) vt.signatures[idx] = new Uint8Array(sig)
+          }
+        }
+
+        console.log('[x402] Signing Solana transaction with wallet provider')
+        const signedVt = await provider.signTransaction(vt)
+
+        // Find our signature in the signed transaction
+        const ourIndex = accountKeys.findIndex(key => key.toBase58() === address)
+        const ourSignature = signedVt.signatures[ourIndex]
+
+        console.log('[x402] Solana signature obtained')
+        return {
+          ...tx,
+          signatures: {
+            ...tx.signatures,
+            [address]: ourSignature
+          }
+        }
+      }))
+    }
+  }
+}
+
+/**
+ * Create an x402 fetch client with the appropriate signer for the connected wallet
  */
 async function createX402Fetch() {
-  let signer
+  const client = new x402Client()
 
   if (TEST_MODE && testAccount) {
-    console.log('[x402] Using test account as signer')
-    signer = testAccount
+    console.log('[x402] Using test account as signer (EVM)')
+    registerExactEvmScheme(client, { signer: testAccount })
+  } else if (isSolanaConnected()) {
+    console.log('[x402] Creating Solana wallet signer')
+    const address = getAddress()
+    const provider = solanaProvider || await getProvider()
+    const signer = createSolanaWalletSigner(provider, address)
+    registerExactSvmScheme(client, { signer })
   } else {
-    console.log('[x402] Creating wallet signer')
-    signer = await createWalletSigner()
+    console.log('[x402] Creating EVM wallet signer')
+    const signer = await createWalletSigner()
+    registerExactEvmScheme(client, { signer })
   }
 
-  const client = new x402Client()
-  registerExactEvmScheme(client, { signer })
-
   return wrapFetchWithPayment(fetch, client)
+}
+
+/**
+ * Get the appropriate block explorer URL for a transaction
+ */
+function getExplorerUrl(transaction) {
+  if (isSolanaConnected()) {
+    return `https://solscan.io/tx/${transaction}`
+  }
+  return `https://basescan.org/tx/${transaction}`
 }
 
 /**
@@ -189,7 +270,7 @@ async function createX402Fetch() {
  * @returns {Promise<Response>}
  */
 export async function fetchWithPayment(url, options = {}) {
-  console.log('%c[x402] 📡 fetchWithPayment', 'color: #6366f1; font-weight: bold')
+  console.log('%c[x402] fetchWithPayment', 'color: #6366f1; font-weight: bold')
   console.log('[x402] URL:', url)
   console.log('[x402] Method:', options.method || 'GET')
 
@@ -231,7 +312,7 @@ export async function fetchWithPayment(url, options = {}) {
     console.log('[x402] Response status:', response.status, response.statusText)
 
     if (response.ok) {
-      console.log('%c[x402] ✅ Request successful', 'color: #10b981; font-weight: bold')
+      console.log('%c[x402] Request successful', 'color: #10b981; font-weight: bold')
 
       // Check for payment response header
       const paymentResponseHeader = response.headers.get('PAYMENT-RESPONSE')
@@ -239,16 +320,16 @@ export async function fetchWithPayment(url, options = {}) {
         try {
           const settlementResult = JSON.parse(atob(paymentResponseHeader))
           if (settlementResult?.success && settlementResult?.transaction) {
-            console.log('%c[x402] ✅ Payment settled on-chain!', 'color: #10b981; font-weight: bold; font-size: 14px')
-            const explorerUrl = `https://basescan.org/tx/${settlementResult.transaction}`
-            console.log('[x402] 🔗 View on BaseScan:', explorerUrl)
+            console.log('%c[x402] Payment settled on-chain!', 'color: #10b981; font-weight: bold; font-size: 14px')
+            const explorerUrl = getExplorerUrl(settlementResult.transaction)
+            console.log('[x402] View transaction:', explorerUrl)
           }
         } catch (e) {
           // Ignore parse errors
         }
       }
     } else {
-      console.error('%c[x402] ❌ Request failed', 'color: #ef4444; font-weight: bold')
+      console.error('%c[x402] Request failed', 'color: #ef4444; font-weight: bold')
       console.error('[x402] Status:', response.status)
 
       // Log error details
@@ -265,11 +346,11 @@ export async function fetchWithPayment(url, options = {}) {
 
     return response
   } catch (error) {
-    console.error('%c[x402] ❌ Fetch error', 'color: #ef4444; font-weight: bold')
+    console.error('%c[x402] Fetch error', 'color: #ef4444; font-weight: bold')
     console.error('[x402] Error:', error)
     throw error
   }
 }
 
 // Export modal for direct access if needed
-export { modal, wagmiAdapter }
+export { modal, wagmiAdapter, solanaAdapter }

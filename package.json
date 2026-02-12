@@ -11,11 +11,14 @@
   "dependencies": {
     "@playwright/test": "^1.57.0",
     "@reown/appkit": "^1.8.17",
+    "@reown/appkit-adapter-solana": "^1.8.17",
     "@reown/appkit-adapter-wagmi": "^1.8.17",
+    "@solana/web3.js": "^1.95.8",
     "@tanstack/react-query": "^5.62.16",
-    "@x402/core": "^2.2.0",
-    "@x402/evm": "^2.2.0",
-    "@x402/fetch": "^2.2.0",
+    "@x402/core": "^2.3.0",
+    "@x402/evm": "^2.3.0",
+    "@x402/fetch": "^2.3.0",
+    "@x402/svm": "^2.3.0",
     "viem": "^2.23.2",
     "wagmi": "^2.14.11"
   },

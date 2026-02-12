@@ -30,15 +30,23 @@ export const config = {
     ? getEnv('PAY_TO_ADDRESS')
     : process.env.TESTNET_PAY_TO_ADDRESS || '0x0000000000000000000000000000000000000000',
 
+  payToAddressSol: isMainnet
+    ? getEnv('PAY_TO_ADDRESS_SOL')
+    : process.env.TESTNET_PAY_TO_ADDRESS_SOL || '',
+
   // Network: 'base' for mainnet, 'base-sepolia' for testnet
   network: isMainnet
     ? (process.env.X402_NETWORK || 'base')
     : (process.env.TESTNET_X402_NETWORK || 'base-sepolia'),
 
-  // CAIP-2 network identifier
+  // CAIP-2 network identifiers
   networkId: isMainnet
     ? (process.env.NETWORK_ID || 'eip155:8453')
     : (process.env.TESTNET_NETWORK_ID || 'eip155:84532'),
+
+  solanaNetworkId: isMainnet
+    ? 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp'
+    : 'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1',
 
   // Facilitator URL
   facilitatorUrl: isMainnet
@@ -78,8 +86,10 @@ export const config = {
 // Log configuration on startup
 console.log(`\n=== Server Configuration ===`);
 console.log(`Mode: ${config.mode.toUpperCase()}`);
-console.log(`Network: ${config.network} (${config.networkId})`);
-console.log(`Pay to: ${config.payToAddress || '(not set)'}`);
+console.log(`EVM Network: ${config.network} (${config.networkId})`);
+console.log(`EVM Pay to: ${config.payToAddress || '(not set)'}`);
+console.log(`Solana Network: ${config.solanaNetworkId}`);
+console.log(`Solana Pay to: ${config.payToAddressSol || '(not set)'}`);
 console.log(`Facilitator: ${config.facilitatorUrl}`);
 console.log(`Price: $${config.posterPrice} USDC`);
 console.log(`============================\n`);

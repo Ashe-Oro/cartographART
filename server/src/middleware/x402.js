@@ -1,5 +1,6 @@
 import { paymentMiddleware, x402ResourceServer } from '@x402/express';
 import { ExactEvmScheme } from '@x402/evm/exact/server';
+import { ExactSvmScheme } from '@x402/svm/exact/server';
 import { HTTPFacilitatorClient } from '@x402/core/server';
 import { generateJwt } from '@coinbase/cdp-sdk/auth';
 import { config } from '../config.js';
@@ -98,21 +99,34 @@ export function setupX402Middleware(app) {
     };
   }
 
-  // Create x402 resource server with EVM scheme support
+  // Create x402 resource server with EVM and SVM scheme support
   const server = new x402ResourceServer(facilitatorClient)
-    .register(config.networkId, new ExactEvmScheme());
+    .register(config.networkId, new ExactEvmScheme())
+    .register(config.solanaNetworkId, new ExactSvmScheme());
+
+  // Build accepts array — include Solana if a pay-to address is configured
+  const accepts = [
+    {
+      scheme: 'exact',
+      price: `$${config.posterPrice}`,
+      network: config.networkId,
+      payTo: config.payToAddress,
+    },
+  ];
+
+  if (config.payToAddressSol) {
+    accepts.push({
+      scheme: 'exact',
+      price: `$${config.posterPrice}`,
+      network: config.solanaNetworkId,
+      payTo: config.payToAddressSol,
+    });
+  }
 
   // Define payment requirements for protected endpoints
   const paymentConfig = {
     'POST /api/posters': {
-      accepts: [
-        {
-          scheme: 'exact',
-          price: `$${config.posterPrice}`,
-          network: config.networkId,
-          payTo: config.payToAddress,
-        },
-      ],
+      accepts,
       description: 'Generate a custom city map poster',
       maxTimeoutSeconds: 300,
     },
@@ -122,8 +136,12 @@ export function setupX402Middleware(app) {
   app.use(paymentMiddleware(paymentConfig, server));
 
   console.log(`x402 middleware configured:`);
-  console.log(`  - Network: ${config.networkId} (${config.network})`);
+  console.log(`  - EVM Network: ${config.networkId} (${config.network})`);
+  console.log(`  - EVM Pay to: ${config.payToAddress}`);
+  if (config.payToAddressSol) {
+    console.log(`  - Solana Network: ${config.solanaNetworkId}`);
+    console.log(`  - Solana Pay to: ${config.payToAddressSol}`);
+  }
   console.log(`  - Price: $${config.posterPrice} USDC`);
-  console.log(`  - Pay to: ${config.payToAddress}`);
   console.log(`  - Facilitator: ${config.facilitatorUrl}`);
 }
