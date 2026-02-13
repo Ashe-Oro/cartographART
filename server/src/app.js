@@ -95,6 +95,23 @@ export function createApp(options = {}) {
     });
   });
 
+  // Solana RPC proxy - forwards JSON-RPC requests to mainnet Solana RPC
+  // (api.mainnet-beta.solana.com blocks browser requests with 403)
+  app.post('/api/solana-rpc', async (req, res) => {
+    try {
+      const response = await fetch('https://api.mainnet-beta.solana.com', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(req.body)
+      });
+      const data = await response.json();
+      res.json(data);
+    } catch (error) {
+      console.error('[solana-rpc] Proxy error:', error.message);
+      res.status(502).json({ error: 'RPC proxy error' });
+    }
+  });
+
   // API routes (themes, jobs, and gallery don't require payment)
   // Apply rate limiting to API endpoints
   app.use('/api', rateLimitHeaders('api'));

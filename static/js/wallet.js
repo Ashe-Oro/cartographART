@@ -212,17 +212,28 @@ function createSolanaWalletSigner(provider, address) {
         console.log('[x402] Signing Solana transaction with wallet provider')
         const signedVt = await provider.signTransaction(vt)
 
-        // Find our signature in the signed transaction
-        const ourIndex = accountKeys.findIndex(key => key.toBase58() === address)
-        const ourSignature = signedVt.signatures[ourIndex]
+        // Phantom (and other wallets) may modify the transaction on mainnet
+        // (e.g., injecting Lighthouse instructions), changing the message structure.
+        // Return the fully signed transaction bytes so the server gets the actual
+        // signed transaction rather than a mismatched original + signature.
+        const signedMessageBytes = signedVt.message.serialize()
+        const signedMessage = VersionedMessage.deserialize(signedMessageBytes)
+        const signedAccountKeys = signedMessage.staticAccountKeys
+
+        // Extract all signatures from the signed transaction keyed by address
+        const signedSignatures = {}
+        for (let i = 0; i < signedVt.signatures.length; i++) {
+          const sig = signedVt.signatures[i]
+          if (sig && sig.some(b => b !== 0)) {
+            const keyAddr = signedAccountKeys[i]?.toBase58()
+            if (keyAddr) signedSignatures[keyAddr] = sig
+          }
+        }
 
         console.log('[x402] Solana signature obtained')
         return {
-          ...tx,
-          signatures: {
-            ...tx.signatures,
-            [address]: ourSignature
-          }
+          messageBytes: signedMessageBytes,
+          signatures: signedSignatures
         }
       }))
     }
@@ -243,9 +254,9 @@ async function createX402Fetch() {
     const address = getAddress()
     const provider = solanaProvider || await getProvider()
     const signer = createSolanaWalletSigner(provider, address)
-    // Use ExactSvmScheme directly with browser-compatible RPC
-    // (registerExactSvmScheme has a bug that doesn't forward rpcUrl config)
-    const solanaRpcUrl = `https://rpc.walletconnect.org/v1?chainId=solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp&projectId=${projectId}`
+    // Use our server-side RPC proxy (api.mainnet-beta.solana.com blocks browser requests,
+    // and WalletConnect RPC proxy returns data incompatible with @solana/kit v2)
+    const solanaRpcUrl = `${window.location.origin}/api/solana-rpc`
     client.register('solana:*', new ExactSvmScheme(signer, { rpcUrl: solanaRpcUrl }))
   } else {
     console.log('[x402] Creating EVM wallet signer')
