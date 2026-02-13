@@ -7,7 +7,7 @@ import { toHex, getAddress as checksumAddress } from 'viem'
 import { VersionedMessage, VersionedTransaction } from '@solana/web3.js'
 import { wrapFetchWithPayment } from '@x402/fetch'
 import { registerExactEvmScheme } from '@x402/evm/exact/client'
-import { createRpcClient, DEFAULT_COMPUTE_UNIT_LIMIT, DEFAULT_COMPUTE_UNIT_PRICE_MICROLAMPORTS } from '@x402/svm'
+import { ExactSvmScheme } from '@x402/svm/exact/client'
 import { x402Client } from '@x402/core/client'
 
 // ============================================
@@ -230,86 +230,6 @@ function createSolanaWalletSigner(provider, address) {
 }
 
 /**
- * Custom SVM scheme that omits the Memo instruction.
- * The CDP facilitator hasn't been updated to accept Memo yet (x402 issue #828).
- * Once updated, this can be replaced with the standard ExactSvmScheme.
- */
-class ExactSvmSchemeNoMemo {
-  constructor(signer, config) {
-    this.signer = signer
-    this.config = config
-    this.scheme = 'exact'
-  }
-
-  async createPaymentPayload(x402Version, paymentRequirements) {
-    const { fetchMint, findAssociatedTokenPda, getTransferCheckedInstruction, TOKEN_2022_PROGRAM_ADDRESS } = await import('@solana-program/token-2022')
-    const { TOKEN_PROGRAM_ADDRESS } = await import('@solana-program/token')
-    const { getSetComputeUnitLimitInstruction, setTransactionMessageComputeUnitPrice } = await import('@solana-program/compute-budget')
-    const { createTransactionMessage, getBase64EncodedWireTransaction, partiallySignTransactionMessageWithSigners, pipe, prependTransactionMessageInstruction, appendTransactionMessageInstructions, setTransactionMessageFeePayer, setTransactionMessageLifetimeUsingBlockhash } = await import('@solana/kit')
-
-    const rpc = createRpcClient(paymentRequirements.network, this.config?.rpcUrl)
-    const tokenMint = await fetchMint(rpc, paymentRequirements.asset)
-    const tokenProgramAddress = tokenMint.programAddress
-
-    if (tokenProgramAddress.toString() !== TOKEN_PROGRAM_ADDRESS.toString() &&
-        tokenProgramAddress.toString() !== TOKEN_2022_PROGRAM_ADDRESS.toString()) {
-      throw new Error('Asset was not created by a known token program')
-    }
-
-    const [sourceATA] = await findAssociatedTokenPda({
-      mint: paymentRequirements.asset,
-      owner: this.signer.address,
-      tokenProgram: tokenProgramAddress
-    })
-    const [destinationATA] = await findAssociatedTokenPda({
-      mint: paymentRequirements.asset,
-      owner: paymentRequirements.payTo,
-      tokenProgram: tokenProgramAddress
-    })
-
-    const transferIx = getTransferCheckedInstruction(
-      {
-        source: sourceATA,
-        mint: paymentRequirements.asset,
-        destination: destinationATA,
-        authority: this.signer,
-        amount: BigInt(paymentRequirements.amount),
-        decimals: tokenMint.data.decimals
-      },
-      { programAddress: tokenProgramAddress }
-    )
-
-    const feePayer = paymentRequirements.extra?.feePayer
-    if (!feePayer) {
-      throw new Error('feePayer is required in paymentRequirements.extra for SVM transactions')
-    }
-
-    const { value: latestBlockhash } = await rpc.getLatestBlockhash().send()
-
-    // Build transaction with only 3 instructions (no Memo) for CDP facilitator compatibility
-    const tx = pipe(
-      createTransactionMessage({ version: 0 }),
-      (tx2) => setTransactionMessageComputeUnitPrice(DEFAULT_COMPUTE_UNIT_PRICE_MICROLAMPORTS, tx2),
-      (tx2) => setTransactionMessageFeePayer(feePayer, tx2),
-      (tx2) => prependTransactionMessageInstruction(
-        getSetComputeUnitLimitInstruction({ units: DEFAULT_COMPUTE_UNIT_LIMIT }),
-        tx2
-      ),
-      (tx2) => appendTransactionMessageInstructions([transferIx], tx2),
-      (tx2) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, tx2)
-    )
-
-    const signedTransaction = await partiallySignTransactionMessageWithSigners(tx)
-    const base64EncodedWireTransaction = getBase64EncodedWireTransaction(signedTransaction)
-
-    return {
-      x402Version,
-      payload: { transaction: base64EncodedWireTransaction }
-    }
-  }
-}
-
-/**
  * Create an x402 fetch client with the appropriate signer for the connected wallet
  */
 async function createX402Fetch() {
@@ -323,8 +243,10 @@ async function createX402Fetch() {
     const address = getAddress()
     const provider = solanaProvider || await getProvider()
     const signer = createSolanaWalletSigner(provider, address)
+    // Use ExactSvmScheme directly with browser-compatible RPC
+    // (registerExactSvmScheme has a bug that doesn't forward rpcUrl config)
     const solanaRpcUrl = `https://rpc.walletconnect.org/v1?chainId=solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp&projectId=${projectId}`
-    client.register('solana:*', new ExactSvmSchemeNoMemo(signer, { rpcUrl: solanaRpcUrl }))
+    client.register('solana:*', new ExactSvmScheme(signer, { rpcUrl: solanaRpcUrl }))
   } else {
     console.log('[x402] Creating EVM wallet signer')
     const signer = await createWalletSigner()
