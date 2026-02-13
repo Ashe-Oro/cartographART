@@ -196,6 +196,7 @@ async function createWalletSigner() {
 const TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA')
 const TOKEN_2022_PROGRAM_ID = new PublicKey('TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb')
 const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL')
+const SYSTEM_PROGRAM_ID = new PublicKey('11111111111111111111111111111111')
 
 /**
  * Compute the Associated Token Account address for an owner + mint
@@ -206,6 +207,26 @@ function findAssociatedTokenAddress(owner, mint, tokenProgramId) {
     ASSOCIATED_TOKEN_PROGRAM_ID
   )
   return address
+}
+
+/**
+ * Build a createAssociatedTokenAccountIdempotent instruction.
+ * Creates the ATA if it doesn't exist; no-op if it does.
+ * Instruction discriminator: 1 (idempotent create)
+ */
+function buildCreateATAIdempotentInstruction(payer, ata, owner, mint, tokenProgramId) {
+  return new TransactionInstruction({
+    programId: ASSOCIATED_TOKEN_PROGRAM_ID,
+    keys: [
+      { pubkey: payer, isSigner: true, isWritable: true },
+      { pubkey: ata, isSigner: false, isWritable: true },
+      { pubkey: owner, isSigner: false, isWritable: false },
+      { pubkey: mint, isSigner: false, isWritable: false },
+      { pubkey: SYSTEM_PROGRAM_ID, isSigner: false, isWritable: false },
+      { pubkey: tokenProgramId, isSigner: false, isWritable: false },
+    ],
+    data: Buffer.from([1]) // 1 = CreateIdempotent
+  })
 }
 
 /**
@@ -278,15 +299,28 @@ class SolanaPaymentScheme {
     // Get latest blockhash
     const { blockhash } = await connection.getLatestBlockhash()
 
-    // Build 3-instruction transaction (no Memo)
+    // Check if destination ATA exists; if not, include a create instruction
+    const destATAInfo = await connection.getAccountInfo(destATA)
+    const needsCreateATA = !destATAInfo
+
     const instructions = [
-      ComputeBudgetProgram.setComputeUnitLimit({ units: 20000 }),
+      ComputeBudgetProgram.setComputeUnitLimit({ units: needsCreateATA ? 50000 : 20000 }),
       ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1 }),
+    ]
+
+    if (needsCreateATA) {
+      console.log('[x402] Destination ATA does not exist, adding create instruction')
+      instructions.push(
+        buildCreateATAIdempotentInstruction(feePayerKey, destATA, payTo, mint, tokenProgramId)
+      )
+    }
+
+    instructions.push(
       buildTransferCheckedInstruction(
         sourceATA, mint, destATA, authority,
         paymentRequirements.amount, decimals, tokenProgramId
       )
-    ]
+    )
 
     const messageV0 = new TransactionMessage({
       payerKey: feePayerKey,
